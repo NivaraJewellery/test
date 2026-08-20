@@ -172,7 +172,7 @@ function scrollProductFilters(direction) {
 }
 
 
-function resetAppliedPromo(message = 'Launch offer codes require a signed-in account with a verified mobile number.') {
+function resetAppliedPromo(message = '') {
   appliedPromo = null;
   const input = document.getElementById('promoCode');
   const button = document.getElementById('promoApplyButton');
@@ -383,10 +383,15 @@ function renderCart() {
   const discountRow = document.getElementById('promoDiscountRow');
   const grandTotalRow = document.getElementById('cartGrandTotalRow');
   const discountNode = document.getElementById('promoDiscount');
+  const discountLabel = document.getElementById('promoDiscountLabel');
   const grandTotalNode = document.getElementById('cartGrandTotal');
   if (discountRow) discountRow.hidden = !appliedPromo;
   if (grandTotalRow) grandTotalRow.hidden = !appliedPromo;
   if (discountNode) discountNode.textContent = `- ${formatPrice(discount)}`;
+  if (discountLabel) {
+    const percent = Number(appliedPromo?.percent || LAUNCH_PROMO_PERCENT);
+    discountLabel.textContent = appliedPromo ? `Promo discount (${percent}%)` : 'Promo discount';
+  }
   if (grandTotalNode) grandTotalNode.textContent = formatPrice(total);
 
   localStorage.setItem('nivara-cart', JSON.stringify(cart));
