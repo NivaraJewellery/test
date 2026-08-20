@@ -976,16 +976,31 @@ window.addEventListener('resize', syncAnnouncementOffset);
 updateAnnouncementBar();
 setInterval(updateAnnouncementBar, 30000);
 
+function setCheckoutPaymentLoading(isLoading) {
+  const button = document.getElementById('checkoutContinueButton');
+  const card = document.querySelector('#checkoutReviewModal .checkout-review-card');
+  if (button) {
+    button.disabled = isLoading;
+    button.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+    button.innerHTML = isLoading
+      ? '<span class="payment-button-spinner" aria-hidden="true"></span><span>Preparing secure payment...</span>'
+      : 'Continue to payment';
+  }
+  if (card) card.classList.toggle('payment-loading', isLoading);
+}
+
 async function proceedToPayment() {
   if (!cart.length) return showToast('Your bag is empty');
 
   if (!customer && !pendingGuestDetails) {
+    closeCheckoutReview();
     openGuestCheckout();
     return;
   }
 
   if (customer && !hasCompleteCheckoutProfile(customer)) {
     showToast('Please add and verify your mobile number and address.');
+    closeCheckoutReview();
     openProfile();
     return;
   }
@@ -994,6 +1009,8 @@ async function proceedToPayment() {
     showToast('Payment service is unavailable. Please try again.');
     return;
   }
+
+  setCheckoutPaymentLoading(true);
 
   const checkoutButton = document.getElementById('checkoutButton');
   if (checkoutButton) {
@@ -1063,10 +1080,12 @@ async function proceedToPayment() {
         }
       }
     });
+    closeCheckoutReview();
     razorpay.open();
   } catch (error) {
     showToast(error.message || 'Unable to start payment.');
   } finally {
+    setCheckoutPaymentLoading(false);
     if (checkoutButton) {
       checkoutButton.disabled = false;
       checkoutButton.textContent = 'Secure checkout';
@@ -1150,7 +1169,6 @@ document.getElementById('checkoutPromoCode')?.addEventListener('keydown', event 
   if (event.key === 'Enter') { event.preventDefault(); applyCheckoutPromo(); }
 });
 document.getElementById('checkoutContinueButton')?.addEventListener('click', () => {
-  closeCheckoutReview();
   proceedToPayment();
 });
 document.getElementById('whatsappCheckoutButton')?.addEventListener('click', continueOrderOnWhatsApp);

@@ -16,3 +16,12 @@
 .checkout-review-footer{padding:12px 14px 14px;background:#fff;border-top:1px solid #eadfce}.checkout-trust{text-align:center;font-size:11px;color:#786c62;margin-bottom:9px}.checkout-review-footer .button{width:100%;margin:0;min-height:48px}
 body.checkout-review-open{overflow:hidden}
 @media(max-width:600px){.checkout-review-modal{padding:0;align-items:flex-end}.checkout-review-card{width:100%;max-height:96vh;border-radius:18px 18px 0 0}.checkout-review-topbar{padding:10px 12px}.checkout-secure{font-size:10px}.checkout-review-body{padding:10px}.checkout-review-items{max-height:160px}.checkout-review-item{grid-template-columns:42px 1fr auto;padding:9px 10px}.checkout-review-item img{width:42px;height:42px}.checkout-customer-line{align-items:flex-start;flex-direction:column;gap:4px}.checkout-customer-line strong{text-align:left}}
+
+/* Payment handoff loading state */
+#checkoutContinueButton{display:flex;align-items:center;justify-content:center;gap:10px}
+#checkoutContinueButton[aria-busy="true"]{cursor:wait;opacity:.92}
+.payment-button-spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:nivara-payment-spin .75s linear infinite;flex:0 0 18px}
+.checkout-review-card.payment-loading .checkout-review-body{pointer-events:none;opacity:.72;transition:opacity .15s ease}
+.checkout-review-card.payment-loading .checkout-review-back{pointer-events:none;opacity:.45}
+@keyframes nivara-payment-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.payment-button-spinner{animation-duration:1.5s}}
