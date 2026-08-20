@@ -935,6 +935,7 @@ document.getElementById('toast').addEventListener('click', event => {
 document.addEventListener('keydown', event => {
   if (event.key !== 'Escape') return;
   closeCart();
+  closeCheckoutReview();
   closeGuestCheckout();
   closeProfile();
   closeOrders();
@@ -967,7 +968,7 @@ window.addEventListener('resize', updateFilterScrollButtons);
 updateAnnouncementBar();
 setInterval(updateAnnouncementBar, 30000);
 
-async function startCheckout() {
+async function proceedToPayment() {
   if (!cart.length) return showToast('Your bag is empty');
 
   if (!customer && !pendingGuestDetails) {
@@ -1065,7 +1066,85 @@ async function startCheckout() {
   }
 }
 
+function renderCheckoutReview() {
+  const modal = document.getElementById('checkoutReviewModal');
+  if (!modal) return;
+  const count = cart.reduce((total, item) => total + item.quantity, 0);
+  const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+  const discount = calculatePromoDiscount(subtotal);
+  const total = Math.max(0, subtotal - discount);
+  document.getElementById('checkoutItemCount').textContent = `${count} ${count === 1 ? 'item' : 'items'}`;
+  document.getElementById('checkoutReviewSubtotal').textContent = formatPrice(subtotal);
+  document.getElementById('checkoutReviewTotal').textContent = formatPrice(total);
+  document.getElementById('checkoutPayableTotal').textContent = formatPrice(total);
+  const original = document.getElementById('checkoutOriginalTotal');
+  if (original) { original.textContent = formatPrice(subtotal); original.hidden = !discount; }
+  const discountRow = document.getElementById('checkoutReviewDiscountRow');
+  const discountLabel = document.getElementById('checkoutReviewDiscountLabel');
+  const discountValue = document.getElementById('checkoutReviewDiscount');
+  if (discountRow) discountRow.hidden = !discount;
+  if (discountLabel) discountLabel.textContent = `Promo discount (${Number(appliedPromo?.percent || LAUNCH_PROMO_PERCENT)}%)`;
+  if (discountValue) discountValue.textContent = `- ${formatPrice(discount)}`;
+  const items = document.getElementById('checkoutReviewItems');
+  if (items) items.innerHTML = cart.map(item => `<div class="checkout-review-item"><img src="${item.image}" alt="${item.name}" /><div><strong>${item.name}</strong><small>Qty: ${item.quantity}</small></div><span>${formatPrice(item.price * item.quantity)}</span></div>`).join('');
+  const promoInput = document.getElementById('checkoutPromoCode');
+  const promoButton = document.getElementById('checkoutPromoApply');
+  const promoStatus = document.getElementById('checkoutPromoStatus');
+  if (promoInput) promoInput.value = appliedPromo?.code || '';
+  if (promoButton) promoButton.textContent = appliedPromo ? 'Remove' : 'Apply';
+  if (promoStatus) {
+    promoStatus.textContent = appliedPromo ? `${appliedPromo.percent}% launch discount applied.` : '';
+    promoStatus.classList.toggle('success', Boolean(appliedPromo));
+  }
+  const customerBox = document.getElementById('checkoutCustomerDetails');
+  if (customerBox) {
+    if (customer) customerBox.innerHTML = `<div class="checkout-customer-line"><span>${customer.name || 'Customer'}</span><strong>${customer.phone || 'Mobile not added'}</strong></div><small>${customer.email || ''}</small>`;
+    else customerBox.innerHTML = `<div class="checkout-customer-line"><span>Guest checkout</span><strong>Delivery details required</strong></div><small>You can continue without creating an account.</small>`;
+  }
+}
+
+function openCheckoutReview() {
+  if (!cart.length) return showToast('Your bag is empty');
+  closeCart();
+  renderCheckoutReview();
+  const modal = document.getElementById('checkoutReviewModal');
+  modal.hidden = false;
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('checkout-review-open');
+}
+
+function closeCheckoutReview() {
+  const modal = document.getElementById('checkoutReviewModal');
+  if (!modal) return;
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden', 'true');
+  modal.hidden = true;
+  document.body.classList.remove('checkout-review-open');
+}
+
+async function applyCheckoutPromo() {
+  const checkoutInput = document.getElementById('checkoutPromoCode');
+  const bagInput = document.getElementById('promoCode');
+  if (bagInput) bagInput.value = checkoutInput?.value || '';
+  await applyPromoCode();
+  renderCheckoutReview();
+}
+
+function startCheckout() {
+  openCheckoutReview();
+}
+
 document.getElementById('checkoutButton')?.addEventListener('click', startCheckout);
+document.getElementById('checkoutReviewClose')?.addEventListener('click', closeCheckoutReview);
+document.getElementById('checkoutPromoApply')?.addEventListener('click', applyCheckoutPromo);
+document.getElementById('checkoutPromoCode')?.addEventListener('keydown', event => {
+  if (event.key === 'Enter') { event.preventDefault(); applyCheckoutPromo(); }
+});
+document.getElementById('checkoutContinueButton')?.addEventListener('click', () => {
+  closeCheckoutReview();
+  proceedToPayment();
+});
 document.getElementById('whatsappCheckoutButton')?.addEventListener('click', continueOrderOnWhatsApp);
 document.getElementById('profileClose').addEventListener('click', closeProfile);
 document.getElementById('ordersClose').addEventListener('click', closeOrders);
@@ -1087,7 +1166,7 @@ document.getElementById('guestCheckoutForm').addEventListener('submit', event =>
   };
   if (!pendingGuestDetails.billingAddress) return showToast('Billing address is required');
   closeGuestCheckout();
-  startCheckout();
+  proceedToPayment();
 });
 
 document.getElementById('resendProfileOtp').addEventListener('click', async () => {
