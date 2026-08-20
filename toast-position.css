@@ -1,0 +1,56 @@
+.toast {
+  left: auto;
+  right: 24px;
+  bottom: auto;
+  top: 92px;
+  max-width: min(360px, calc(100vw - 32px));
+  transform: translateY(-18px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  background: #7d4c18;
+  color: #fffaf2;
+  box-shadow: 0 18px 45px rgba(33, 26, 23, 0.2);
+}
+
+.toast.toast-success {
+  background: linear-gradient(135deg, #7d4c18, #bd8a3a);
+  color: #fffaf2;
+}
+
+.toast.show {
+  transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.profile-modal[hidden] {
+  display: none !important;
+}
+
+.profile-modal.open {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: grid !important;
+  place-items: center;
+  padding: 20px;
+  background: rgba(42, 29, 21, 0.46);
+}
+
+.profile-card {
+  width: min(620px, 100%);
+  max-height: min(88vh, 760px);
+  overflow: auto;
+}
+
+@media (max-width: 760px) {
+  .toast {
+    left: 16px;
+    right: 16px;
+    top: 16px;
+    transform: translateY(-18px);
+    text-align: center;
+  }
+}

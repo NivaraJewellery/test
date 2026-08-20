@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nivara Admin | Products</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <main class="admin-shell">
+    <header class="admin-header">
+      <div>
+        <p>Nivara Jewellery</p>
+        <h1>Product Admin</h1>
+      </div>
+      <a href="index.html">View shop</a>
+    </header>
+
+    <section class="login-panel" id="loginPanel">
+      <h2>Admin login</h2>
+      <p>Enter the admin password saved in Vercel as <code>ADMIN_PASSWORD</code>.</p>
+      <form id="loginForm">
+        <input type="password" id="adminPassword" placeholder="Admin password" required />
+        <button type="submit">Login</button>
+      </form>
+    </section>
+
+    <section class="admin-panel" id="adminPanel" hidden>
+      <section class="admin-note">
+        Product changes are saved in Neon and will show on the website for every customer.
+      </section>
+
+      <section class="admin-actions">
+        <button id="initializeDb">Initialize database</button>
+        <a class="admin-action-link" href="reports.html">Open reports</a>
+        <a class="admin-action-link" href="notify.html">Notify requests</a>
+        <button id="logoutButton">Logout</button>
+      </section>
+      <p class="session-note" id="adminSessionNote"></p>
+
+      <section class="product-form-wrap">
+        <h2>Add collection</h2>
+        <form id="collectionForm" class="product-form compact-form">
+          <input name="name" placeholder="Collection name" required />
+          <input name="icon" placeholder="Symbol" value="◇" />
+          <button type="submit">Add collection</button>
+        </form>
+        <div class="collection-list" id="collectionList"></div>
+      </section>
+
+      <section class="product-form-wrap">
+        <h2>Add new product</h2>
+        <form id="productForm" class="product-form">
+          <input name="name" placeholder="Product name" required />
+          <input name="category" placeholder="Category" value="Necklace" required />
+          <input name="type" placeholder="Type/filter" value="necklace" required />
+          <select name="collection_id" id="collectionSelect"></select>
+          <input name="price" type="number" min="0" placeholder="Selling price" required />
+          <input name="stock" type="number" min="0" placeholder="Stock quantity" required />
+          <input name="code" placeholder="Product code" />
+          <input name="image" placeholder="Main image path, example assets/products/product-15.jpg" required />
+          <input name="image_2" placeholder="Hover image path (optional)" />
+          <input name="image_3" placeholder="Extra image path for zoom popup (optional)" />
+          <textarea name="description" placeholder="Short description"></textarea>
+          <textarea name="care" placeholder="Care instructions"></textarea>
+          <button type="submit">Add product</button>
+        </form>
+      </section>
+
+      <section class="product-form-wrap">
+        <h2>Bulk product update</h2>
+        <p class="muted-text">Upload Excel/CSV or paste rows. Columns supported: <strong>code, stock, price, category, image, image_2, image_3</strong>. Leave a value blank if you do not want to change it.</p>
+        <div class="bulk-upload-box">
+          <label>Upload Excel or CSV
+            <input id="bulkExcelUpload" type="file" accept=".xlsx,.xls,.csv" />
+          </label>
+          <a class="sample-link" id="downloadBulkTemplate" href="#">Download sample template</a>
+        </div>
+        <form id="bulkUpdateForm" class="bulk-update-form">
+          <textarea name="bulkRows" placeholder="Example:
+025, 5, 250, Forehead Ornament, assets/products/025-main.jpg, assets/products/025-hover.jpg, assets/products/025-extra.jpg
+030, 2, 500, Forehead Ornament, assets/products/030-main.jpg, assets/products/030-hover.jpg, assets/products/030-extra.jpg" required></textarea>
+          <button type="submit">Update products in bulk</button>
+        </form>
+      </section>
+
+      <section class="stock-list" id="stockList"></section>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

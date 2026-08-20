@@ -1,0 +1,8 @@
+/* Nivara's Ivory & Antique Gold theme */
+:root{--ink:#2f271d;--muted:#746b5c;--cream:#fbf7ee;--line:#e6dcc8;--gold:#a97931}
+.announcement{background:#30271e;color:#fff9ee}.announcement span{color:#e0ba73}.site-header{background:rgba(251,247,238,.95)}
+.hero{background:#eee2ca}.hero-art{background:linear-gradient(130deg,#f5ead4,#c9a66e)}.hero-art:after{background:radial-gradient(circle at 50% 30%,transparent 0 15%,rgba(76,48,19,.1) 80%)}
+.eyebrow{color:#8c642d}.hero h1 em,h2 em{color:#8c642d}.hero-description{color:#5e5141}.button-dark{background:#30271e;color:white}.button-light{color:#30271e}
+.category-earrings{background:#f1e4cc}.category-necklaces{background:#dfd6c4}.category-bangles{background:#ead5a3}.category-bridal{background:#d8c0a0}.products-section{background:#fffdf8}
+.product:nth-child(1) .product-image{background:#ecdec5}.product:nth-child(2) .product-image{background:#ded7c8}.product:nth-child(3) .product-image{background:#ead8aa}.product:nth-child(4) .product-image{background:#dac4a4}.product:nth-child(5) .product-image{background:#eadbc2}.product:nth-child(6) .product-image{background:#ded5c4}.product:nth-child(7) .product-image{background:#eadbb8}.product:nth-child(8) .product-image{background:#ddc7aa}
+.editorial{background:#30271e}.editorial-art{background:#b7915c}.editorial-copy .eyebrow{color:#d9ad6b}.editorial h2 em{color:#f0d39b}.newsletter{background:#f0e3cb}.newsletter>p:not(.eyebrow){color:#6e604d}.newsletter small{color:#795d36}.cart-panel{background:#fffdf8}.cart-icon{background:#ecdec5}.toast{background:#30271e}

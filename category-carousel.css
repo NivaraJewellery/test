@@ -1,0 +1,69 @@
+.collection-carousel {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 14px;
+  align-items: center;
+}
+
+.collection-carousel .categories {
+  display: flex !important;
+  grid-template-columns: none !important;
+  gap: 18px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding: 8px 2px 14px;
+}
+
+.collection-carousel .categories::-webkit-scrollbar {
+  display: none;
+}
+
+.collection-carousel .category {
+  flex: 0 0 clamp(220px, 24vw, 285px);
+  scroll-snap-align: start;
+}
+
+.collection-scroll-button {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(185, 129, 47, 0.32);
+  border-radius: 50%;
+  background: #fffaf0;
+  color: var(--ink);
+  cursor: pointer;
+  font: 700 24px/1 "DM Sans", sans-serif;
+  box-shadow: 0 10px 24px rgba(85, 53, 24, 0.08);
+  transition: transform 0.18s ease, opacity 0.18s ease, background 0.18s ease;
+}
+
+.collection-scroll-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: #f6e7cb;
+}
+
+.collection-scroll-button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+@media (max-width: 760px) {
+  .collection-carousel {
+    grid-template-columns: 38px minmax(0, 1fr) 38px;
+    gap: 8px;
+  }
+
+  .collection-scroll-button {
+    width: 38px;
+    height: 38px;
+    font-size: 21px;
+  }
+
+  .collection-carousel .category {
+    flex-basis: min(76vw, 260px);
+  }
+}

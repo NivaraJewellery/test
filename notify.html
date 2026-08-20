@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nivara Admin | Notify Requests</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <main class="admin-shell">
+    <header class="admin-header">
+      <div>
+        <p>Nivara Jewellery</p>
+        <h1>Notify Requests</h1>
+      </div>
+      <a href="admin.html">Product admin</a>
+    </header>
+
+    <section class="login-panel" id="loginPanel">
+      <h2>Admin login</h2>
+      <p>Enter the admin password saved in Vercel as <code>ADMIN_PASSWORD</code>.</p>
+      <form id="loginForm">
+        <input type="password" id="adminPassword" placeholder="Admin password" required />
+        <button type="submit">Login</button>
+      </form>
+    </section>
+
+    <section class="admin-panel" id="notifyPanel" hidden>
+      <section class="admin-actions">
+        <button id="refreshNotify" type="button">Refresh requests</button>
+        <a class="admin-action-link" href="reports.html">Open reports</a>
+        <button id="logoutButton" type="button">Logout</button>
+      </section>
+      <p class="session-note" id="adminSessionNote"></p>
+
+      <section class="product-form-wrap">
+        <h2>Customers waiting for sold-out products</h2>
+        <p class="muted-text">When you restock a product, waiting customers are emailed automatically if Resend is configured.</p>
+        <div class="notify-list" id="notifyList"></div>
+      </section>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <script src="notify.js"></script>
+</body>
+</html>

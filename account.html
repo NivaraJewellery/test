@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nivara Jewellery | Account</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="account.css" />
+</head>
+<body>
+  <main class="account-shell">
+    <section class="account-hero">
+      <a class="mini-brand" href="index.html">
+        <img src="assets/logo-symbol.png" alt="" />
+        <span>Nivara Jewellery</span>
+      </a>
+      <p class="eyebrow">Member access</p>
+      <h1>Your sparkle, saved beautifully.</h1>
+      <p>Login to continue shopping, save your profile, and keep your order details in one place.</p>
+      <a class="shop-link" href="index.html">Back to shop</a>
+    </section>
+
+    <section class="account-card">
+      <div class="auth-tabs" role="tablist" aria-label="Account options">
+        <button class="active" type="button" data-auth-tab="login">Login</button>
+        <button type="button" data-auth-tab="signup">Signup</button>
+      </div>
+
+      <form id="loginForm" class="auth-panel active">
+        <h2>Welcome back</h2>
+        <p>Enter your details to continue to Nivara Jewellery.</p>
+        <label>Email<input name="email" type="email" autocomplete="off" required /></label>
+        <label>Password
+          <span class="password-field"><input name="password" type="password" autocomplete="off" required /><button class="show-password" type="button" aria-label="Show password">👁</button></span>
+        </label>
+        <button type="submit">Login</button>
+        <button class="link-button" id="showReset" type="button">Forgot password?</button>
+      </form>
+
+      <form id="signupForm" class="auth-panel">
+        <h2>Create account</h2>
+        <p>All fields are required so we can prepare your orders correctly.</p>
+        <label>Name<input name="name" autocomplete="off" required /></label>
+        <label>Email<input name="email" type="email" autocomplete="off" required /></label>
+        <label>Mobile number<input name="phone" type="tel" autocomplete="off" required /></label>
+        <label>Password
+          <span class="password-field"><input name="password" type="password" autocomplete="off" minlength="6" required /><button class="show-password" type="button" aria-label="Show password">👁</button></span>
+        </label>
+        <button type="submit">Create account</button>
+      </form>
+
+      <form id="signupOtpForm" class="auth-panel reset-panel" hidden>
+        <h2>Verify mobile</h2>
+        <p>Enter the OTP sent to your email to verify your mobile number.</p>
+        <label>OTP<input name="otp" inputmode="numeric" required /></label>
+        <button type="submit">Verify and login</button>
+        <button class="link-button" id="resendSignupOtp" type="button">Resend OTP</button>
+      </form>
+
+      <form id="resetRequestForm" class="auth-panel reset-panel" hidden>
+        <h2>Reset password</h2>
+        <p>We will email you a secure reset link.</p>
+        <label>Email<input name="email" type="email" autocomplete="off" required /></label>
+        <button type="submit">Send reset email</button>
+        <button class="link-button" data-auth-tab="login" type="button">Back to login</button>
+      </form>
+
+      <form id="resetConfirmForm" class="auth-panel reset-panel" hidden>
+        <h2>Choose new password</h2>
+        <p>Enter a new password for your account.</p>
+        <label>New password
+          <span class="password-field"><input name="password" type="password" autocomplete="off" minlength="6" required /><button class="show-password" type="button" aria-label="Show password">👁</button></span>
+        </label>
+        <button type="submit">Save new password</button>
+      </form>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <script src="account.js"></script>
+</body>
+</html>

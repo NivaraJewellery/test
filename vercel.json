@@ -1,0 +1,145 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/api/account",
+      "destination": "/api?route=account"
+    },
+    {
+      "source": "/api/admin-auth",
+      "destination": "/api?route=admin-auth"
+    },
+    {
+      "source": "/api/admin-collections",
+      "destination": "/api?route=admin-collections"
+    },
+    {
+      "source": "/api/admin-init",
+      "destination": "/api?route=admin-init"
+    },
+    {
+      "source": "/api/admin-orders",
+      "destination": "/api?route=admin-orders"
+    },
+    {
+      "source": "/api/admin-products",
+      "destination": "/api?route=admin-products"
+    },
+    {
+      "source": "/api/collections",
+      "destination": "/api?route=collections"
+    },
+    {
+      "source": "/api/create-order",
+      "destination": "/api?route=create-order"
+    },
+    {
+      "source": "/api/notify-requests",
+      "destination": "/api?route=notify-requests"
+    },
+    {
+      "source": "/api/products",
+      "destination": "/api?route=products"
+    },
+    {
+      "source": "/api/promo-release",
+      "destination": "/api?route=promo-release"
+    },
+    {
+      "source": "/api/promo",
+      "destination": "/api?route=promo"
+    },
+    {
+      "source": "/api/verify-payment",
+      "destination": "/api?route=verify-payment"
+    },
+    {
+      "source": "/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/account",
+      "destination": "/account.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/reports",
+      "destination": "/reports.html"
+    },
+    {
+      "source": "/notify",
+      "destination": "/notify.html"
+    },
+    {
+      "source": "/maintenance",
+      "destination": "/maintenance.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), payment=(self)"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0"
+        }
+      ]
+    },
+    {
+      "source": "/admin",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0"
+        }
+      ]
+    },
+    {
+      "source": "/reports",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0"
+        }
+      ]
+    },
+    {
+      "source": "/notify",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,126 @@
+/* Header / Instagram safety fixes */
+.site-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: clamp(12px, 1.6vw, 24px);
+  min-height: 112px;
+}
+
+.site-header .brand {
+  flex: 0 1 240px;
+  min-width: 170px;
+  width: auto;
+}
+
+.site-header .brand-wordmark-img {
+  display: block !important;
+  width: min(230px, 100%) !important;
+  height: 78px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.site-header nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: clamp(16px, 2vw, 30px);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.site-header nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.instagram-icon {
+  display: inline-block;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px;
+  flex: 0 0 20px;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: middle;
+}
+
+.instagram-icon rect,
+.instagram-icon circle {
+  fill: none !important;
+  stroke: currentColor !important;
+}
+
+.site-header .cart-button,
+.site-header .user-menu {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 1050px) and (min-width: 761px) {
+  .site-header {
+    padding-left: 3vw;
+    padding-right: 3vw;
+    gap: 12px;
+  }
+
+  .site-header .brand {
+    flex-basis: 185px;
+    min-width: 150px;
+  }
+
+  .site-header .brand-wordmark-img {
+    width: 180px !important;
+    height: 66px !important;
+  }
+
+  .site-header nav {
+    gap: 15px;
+  }
+
+  .site-header nav a {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 760px) {
+  .site-header {
+    min-height: 90px;
+    flex-wrap: nowrap;
+  }
+
+  .site-header .brand {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .site-header .brand-wordmark-img {
+    width: 155px !important;
+    height: 56px !important;
+  }
+
+  .site-header nav {
+    display: none;
+    position: absolute;
+    top: 89px;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 18px 5vw;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    white-space: normal;
+    background: var(--cream);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 18px 35px rgba(55, 40, 28, 0.08);
+  }
+
+  .site-header nav.open {
+    display: flex;
+  }
+}

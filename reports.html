@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nivara Admin | Reports</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <main class="admin-shell">
+    <header class="admin-header">
+      <div>
+        <p>Nivara Jewellery</p>
+        <h1>Reports</h1>
+      </div>
+      <a href="admin.html">Product admin</a>
+    </header>
+
+    <section class="login-panel" id="loginPanel">
+      <h2>Admin login</h2>
+      <p>Enter the admin password saved in Vercel as <code>ADMIN_PASSWORD</code>.</p>
+      <form id="loginForm">
+        <input type="password" id="adminPassword" placeholder="Admin password" required />
+        <button type="submit">Login</button>
+      </form>
+    </section>
+
+    <section class="admin-panel" id="reportPanel" hidden>
+      <section class="admin-actions">
+        <button id="refreshReports" type="button">Refresh reports</button>
+        <button id="clearReports" type="button">Clear all reports</button>
+        <button id="logoutButton" type="button">Logout</button>
+      </section>
+      <p class="session-note" id="adminSessionNote"></p>
+
+      <section class="report-grid" id="reportGrid"></section>
+
+      <section class="product-form-wrap">
+        <h2>Order report</h2>
+        <p class="muted-text">Track open, in-progress, delivered orders and sales totals.</p>
+        <div class="order-list" id="orderList"></div>
+        <div class="pagination-controls" id="orderPagination"></div>
+      </section>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <script src="reports.js"></script>
+</body>
+</html>
