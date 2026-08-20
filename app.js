@@ -171,6 +171,23 @@ function scrollProductFilters(direction) {
   node.scrollBy({ left: direction * distance, behavior: 'smooth' });
 }
 
+
+function resetAppliedPromo(message = 'Launch offer codes require a signed-in account with a verified mobile number.') {
+  appliedPromo = null;
+  const input = document.getElementById('promoCode');
+  const button = document.getElementById('promoApplyButton');
+  const status = document.getElementById('promoStatus');
+  if (input) input.value = '';
+  if (button) {
+    button.textContent = 'Apply';
+    button.disabled = cart.length === 0;
+  }
+  if (status) {
+    status.textContent = message;
+    status.classList.remove('success');
+  }
+}
+
 async function applyPromoCode() {
   const input = document.getElementById('promoCode');
   const button = document.getElementById('promoApplyButton');
@@ -178,17 +195,12 @@ async function applyPromoCode() {
   const code = String(input?.value || '').trim().toUpperCase();
 
   if (appliedPromo) {
-    appliedPromo = null;
-    if (input) input.value = '';
-    if (button) button.textContent = 'Apply';
-    if (status) {
-      status.textContent = 'Promo removed.';
-      status.classList.remove('success');
-    }
+    resetAppliedPromo('Promo removed.');
     renderCart();
     return;
   }
 
+  if (!cart.length) return showToast('Add an item to your bag before applying a promo code.');
   if (!code) return showToast('Enter a promo code.');
   if (!customer || !ensureActiveCustomerSession()) {
     showToast('Please sign in to use the launch promo code.');
@@ -335,6 +347,9 @@ function renderProducts() {
 }
 
 function renderCart() {
+  if (!cart.length && appliedPromo) {
+    resetAppliedPromo('Promo removed because your bag is empty.');
+  }
   const count = cart.reduce((total, item) => total + item.quantity, 0);
   const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
   const discount = calculatePromoDiscount(subtotal);
@@ -343,6 +358,10 @@ function renderCart() {
   document.getElementById('cartTitleCount').textContent = `(${count})`;
   document.getElementById('cartSubtotal').textContent = formatPrice(subtotal);
   document.getElementById('cartEmpty').style.display = cart.length ? 'none' : 'block';
+  const promoInput = document.getElementById('promoCode');
+  const promoButton = document.getElementById('promoApplyButton');
+  if (promoInput) promoInput.disabled = cart.length === 0;
+  if (promoButton) promoButton.disabled = cart.length === 0;
   document.getElementById('cartItems').innerHTML = cart.map(item => `
     <div class="cart-item">
       <img class="cart-photo" src="${item.image}" alt="${item.name}" />
@@ -1006,11 +1025,7 @@ async function startCheckout() {
           const verifyData = await verifyResponse.json();
           if (!verifyResponse.ok) throw new Error(verifyData.error || 'Payment verification failed.');
 
-      appliedPromo = null;
-      const promoInput = document.getElementById('promoCode');
-      const promoButton = document.getElementById('promoApplyButton');
-      if (promoInput) promoInput.value = '';
-      if (promoButton) promoButton.textContent = 'Apply';
+      resetAppliedPromo();
       clearCart();
       closeCart();
       closeGuestCheckout();
