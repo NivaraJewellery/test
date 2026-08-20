@@ -341,3 +341,21 @@
     gap: 14px;
   }
 }
+
+
+/* Checkout-only promo entry + announcement-safe bag positioning */
+:root { --announcement-bar-height: 38px; }
+.cart-panel {
+  top: var(--announcement-bar-height) !important;
+  height: calc(100dvh - var(--announcement-bar-height)) !important;
+  max-height: calc(100dvh - var(--announcement-bar-height)) !important;
+}
+.promo-discount-row[hidden],
+.cart-grand-total[hidden] { display: none !important; }
+
+@supports not (height: 100dvh) {
+  .cart-panel {
+    height: calc(100vh - var(--announcement-bar-height)) !important;
+    max-height: calc(100vh - var(--announcement-bar-height)) !important;
+  }
+}

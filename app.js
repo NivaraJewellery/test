@@ -140,6 +140,12 @@ function getLaunchPromoState(now = Date.now()) {
   return 'active';
 }
 
+function syncAnnouncementOffset() {
+  const bar = document.getElementById('announcementBar');
+  const height = bar ? Math.ceil(bar.getBoundingClientRect().height) : 0;
+  document.documentElement.style.setProperty('--announcement-bar-height', `${height}px`);
+}
+
 function updateAnnouncementBar() {
   const bar = document.getElementById('announcementBar');
   if (!bar) return;
@@ -147,6 +153,7 @@ function updateAnnouncementBar() {
   bar.textContent = state === 'active'
     ? `Launch offer: ${LAUNCH_PROMO_PERCENT}% OFF • Use code ${LAUNCH_PROMO_CODE} • Ends 23 Aug, 11:59 PM IST`
     : 'Complimentary shipping on orders above ₹1,999';
+  requestAnimationFrame(syncAnnouncementOffset);
 }
 
 function calculatePromoDiscount(subtotal) {
@@ -174,9 +181,9 @@ function scrollProductFilters(direction) {
 
 function resetAppliedPromo(message = '') {
   appliedPromo = null;
-  const input = document.getElementById('promoCode');
-  const button = document.getElementById('promoApplyButton');
-  const status = document.getElementById('promoStatus');
+  const input = document.getElementById('promoCode') || document.getElementById('checkoutPromoCode');
+  const button = document.getElementById('promoApplyButton') || document.getElementById('checkoutPromoApply');
+  const status = document.getElementById('promoStatus') || document.getElementById('checkoutPromoStatus');
   if (input) input.value = '';
   if (button) {
     button.textContent = 'Apply';
@@ -189,9 +196,9 @@ function resetAppliedPromo(message = '') {
 }
 
 async function applyPromoCode() {
-  const input = document.getElementById('promoCode');
-  const button = document.getElementById('promoApplyButton');
-  const status = document.getElementById('promoStatus');
+  const input = document.getElementById('promoCode') || document.getElementById('checkoutPromoCode');
+  const button = document.getElementById('promoApplyButton') || document.getElementById('checkoutPromoApply');
+  const status = document.getElementById('promoStatus') || document.getElementById('checkoutPromoStatus');
   const code = String(input?.value || '').trim().toUpperCase();
 
   if (appliedPromo) {
@@ -965,6 +972,7 @@ document.getElementById('promoCode')?.addEventListener('keydown', event => {
   }
 });
 window.addEventListener('resize', updateFilterScrollButtons);
+window.addEventListener('resize', syncAnnouncementOffset);
 updateAnnouncementBar();
 setInterval(updateAnnouncementBar, 30000);
 
