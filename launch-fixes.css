@@ -71,17 +71,9 @@
 }
 .product-filter-scroll-button:disabled { opacity: .28; cursor: default; }
 
-/* Keep the signature cards as a real carousel, never a squeezed pill row. */
+/* Shop by Category uses the dedicated card layout in category-carousel.css. */
 .collection-carousel { min-width: 0; }
 .collection-carousel .categories { min-width: 0; }
-.collection-carousel .category {
-  flex: 0 0 clamp(220px, 24vw, 285px) !important;
-  min-width: 220px !important;
-  height: 230px !important;
-  border-radius: 22px !important;
-  padding: 25px !important;
-}
-.collection-carousel .category b { font-size: 24px !important; }
 
 .promo-box {
   padding: 0 !important;

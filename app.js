@@ -905,12 +905,15 @@ document.addEventListener('click', event => {
   }
 });
 
-document.getElementById('accountLink').addEventListener('click', event => {
-  if (!ensureActiveCustomerSession()) return;
-  if (!customer) return;
-  event.preventDefault();
-  openProfile();
-});
+const accountLinkNode = document.getElementById('accountLink');
+if (accountLinkNode) {
+  accountLinkNode.addEventListener('click', event => {
+    if (!ensureActiveCustomerSession()) return;
+    if (!customer) return;
+    event.preventDefault();
+    openProfile();
+  });
+}
 
 document.addEventListener('click', event => {
   const collection = event.target.closest('[data-collection-filter]');
