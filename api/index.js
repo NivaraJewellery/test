@@ -1,5 +1,6 @@
 const handlers = {
   'account': require('../lib/handlers/account'),
+  'cancel-order': require('../lib/handlers/cancel-order'),
   'admin-auth': require('../lib/handlers/admin-auth'),
   'admin-collections': require('../lib/handlers/admin-collections'),
   'admin-init': require('../lib/handlers/admin-init'),

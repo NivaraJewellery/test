@@ -361,3 +361,60 @@
 .order-summary-items{display:grid;gap:10px;margin:16px 0}.order-summary-item{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:10px;border-bottom:1px solid rgba(90,65,45,.12)}.order-summary-item img{width:64px;height:64px;object-fit:cover;border-radius:8px}.order-summary-item small{display:block;color:#7c7067;margin-top:3px}
 .order-summary-totals{margin:18px 0}.order-summary-total-row{display:flex;justify-content:space-between;padding:7px 0}.order-summary-total-row.grand{font-size:18px;font-weight:800;border-top:1px solid rgba(90,65,45,.2);margin-top:6px;padding-top:12px}.order-summary-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
 @media(max-width:600px){.order-summary-meta{grid-template-columns:1fr}.order-summary-item{grid-template-columns:54px 1fr}.order-summary-item>strong{grid-column:2}.order-summary-item img{width:54px;height:54px}.order-summary-actions .button{width:100%}}
+
+/* v11 checkout/address book + category cleanup */
+.collection-carousel .category::after,
+.collection-carousel .category::before,
+.category::after,
+.category::before {
+  content: none !important;
+  display: none !important;
+}
+
+.phone-status-line {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f6efe4;
+  color: #6c5545;
+  font-size: 13px;
+}
+.phone-status-line span { font-weight: 800; }
+.phone-status-line span.verified { color: #4f7144; }
+.phone-status-line small { color: #806f62; }
+
+.address-book-card { width: min(760px, calc(100vw - 28px)) !important; max-height: min(88vh, 820px); overflow-y: auto; }
+.saved-address-list { display: grid; gap: 12px; margin: 18px 0; }
+.saved-address-card { border: 1px solid #e3d7c6; border-radius: 14px; padding: 15px; background: #fffdf9; transition: .2s ease; }
+.saved-address-card.selected { border-color: #9a682e; box-shadow: 0 0 0 2px rgba(154,104,46,.12); }
+.saved-address-select { display: grid !important; grid-template-columns: auto 1fr; align-items: start; gap: 12px !important; cursor: pointer; }
+.saved-address-select input { width: 18px !important; height: 18px; margin-top: 3px; }
+.saved-address-select span { display: grid; gap: 4px; }
+.saved-address-select strong { font-size: 15px; color: #392d25; }
+.saved-address-select small { color: #7c6c60; }
+.saved-address-select p { margin: 3px 0 0; color: #5f5147; line-height: 1.5; }
+.saved-address-actions { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0 0 30px; }
+.saved-address-actions button { border: 0; background: transparent; padding: 0; color: #8a5a20; text-decoration: underline; cursor: pointer; font: 700 12px 'DM Sans', sans-serif; }
+.saved-address-actions button:last-child { color: #9f493d; }
+.address-empty-state { display: grid; gap: 6px; padding: 20px; border: 1px dashed #d7c2a7; border-radius: 12px; background: #fff8ee; }
+.address-empty-state small { color: #7d6a5c; }
+.address-form { margin-top: 18px; padding: 18px; border: 1px solid #e3d7c6; border-radius: 14px; background: #fffaf3; }
+.address-form > label, .address-form-grid label { display: grid; gap: 7px; font-size: 13px; font-weight: 700; color: #604d40; }
+.address-form input { width: 100%; border: 1px solid #d9c9b5; border-radius: 9px; background: white; padding: 12px; font: 14px 'DM Sans', sans-serif; }
+.address-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+.address-form-grid .wide { grid-column: 1 / -1; }
+.address-form-grid .checkbox-line { display: flex !important; align-items: center; gap: 8px; }
+.address-form-grid .checkbox-line input { width: auto; }
+.address-form-actions { display: flex; gap: 14px; align-items: center; margin-top: 16px; }
+#useSelectedAddress { width: 100%; margin-top: 14px; }
+.compact-verification-card { width: min(500px, calc(100vw - 28px)) !important; }
+.checkout-address-summary { margin-top: 14px; padding-top: 12px; border-top: 1px solid #eadfce; }
+.checkout-address-summary p { margin: 6px 0; color: #66594f; line-height: 1.45; }
+.checkout-address-summary .link-button { padding: 0; }
+
+@media (max-width: 640px) {
+  .address-form-grid { grid-template-columns: 1fr; }
+  .address-form-grid .wide { grid-column: auto; }
+  .saved-address-actions { margin-left: 0; }
+}

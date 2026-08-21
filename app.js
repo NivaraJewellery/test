@@ -4,6 +4,10 @@ let cart = JSON.parse(localStorage.getItem('nivara-cart') || '[]');
 let activeFilter = 'all';
 let customer = JSON.parse(localStorage.getItem('nivara-customer') || 'null');
 let pendingGuestDetails = null;
+let savedAddresses = [];
+let selectedAddressId = null;
+let addressModalMode = 'checkout';
+let pendingProfilePhone = '';
 let imageViewerZoom = 1;
 let imageViewerPan = { x: 0, y: 0 };
 let imageViewerDrag = null;
@@ -66,8 +70,7 @@ function ensureActiveCustomerSession() {
 }
 
 function hasCompleteCheckoutProfile(customerData) {
-  const address = customerData?.address || {};
-  return Boolean(customerData?.phone && customerData?.phoneVerified && address.line1 && address.city && address.state && address.pincode);
+  return Boolean(customerData?.phone && customerData?.phoneVerified);
 }
 
 function clearCart() {
@@ -647,15 +650,14 @@ function renderCustomerMenu() {
 
 function fillProfileForm(customerData) {
   const form = document.getElementById('profileForm');
-  const address = customerData.address || {};
   form.elements.name.value = customerData.name || '';
   form.elements.email.value = customerData.email || '';
   form.elements.phone.value = customerData.phone || '';
-  form.elements.line1.value = address.line1 || '';
-  form.elements.line2.value = address.line2 || '';
-  form.elements.city.value = address.city || '';
-  form.elements.state.value = address.state || '';
-  form.elements.pincode.value = address.pincode || '';
+  const status = document.getElementById('profilePhoneStatus');
+  if (status) {
+    status.textContent = customerData.phoneVerified ? 'Verified mobile' : 'Mobile verification required';
+    status.classList.toggle('verified', Boolean(customerData.phoneVerified));
+  }
 }
 
 async function openProfile() {
@@ -668,7 +670,7 @@ async function openProfile() {
     const data = await accountRequest({ action: 'profile-get', customer });
     saveCustomer(data.customer);
     fillProfileForm(data.customer);
-    document.getElementById('otpForm').hidden = true;
+    savedAddresses = data.addresses || savedAddresses;
     const modal = document.getElementById('profileModal');
     modal.hidden = false;
     modal.classList.add('open');
@@ -683,6 +685,88 @@ function closeProfile() {
   modal.classList.remove('open');
   modal.setAttribute('aria-hidden', 'true');
   modal.hidden = true;
+}
+
+
+function formatSavedAddress(address) {
+  return [address.line1, address.line2, address.city, address.state, address.pincode].filter(Boolean).join(', ');
+}
+
+async function loadSavedAddresses() {
+  if (!customer) { savedAddresses = []; selectedAddressId = null; return []; }
+  const data = await accountRequest({ action: 'addresses-list', customer });
+  savedAddresses = data.addresses || [];
+  if (!selectedAddressId || !savedAddresses.some(a => Number(a.id) === Number(selectedAddressId))) {
+    selectedAddressId = savedAddresses.find(a => a.isDefault)?.id || savedAddresses[0]?.id || null;
+  }
+  return savedAddresses;
+}
+
+function renderSavedAddresses() {
+  const list = document.getElementById('savedAddressList');
+  const useButton = document.getElementById('useSelectedAddress');
+  if (!list) return;
+  if (!savedAddresses.length) {
+    list.innerHTML = '<div class="address-empty-state"><strong>No saved delivery address yet.</strong><small>Add your first address to continue.</small></div>';
+    if (useButton) useButton.hidden = true;
+    return;
+  }
+  list.innerHTML = savedAddresses.map(address => `
+    <article class="saved-address-card ${Number(address.id) === Number(selectedAddressId) ? 'selected' : ''}" data-address-card="${address.id}">
+      <label class="saved-address-select"><input type="radio" name="deliveryAddress" value="${address.id}" ${Number(address.id) === Number(selectedAddressId) ? 'checked' : ''}/><span><strong>${address.label || 'Address'}${address.isDefault ? ' · Default' : ''}</strong><small>${address.recipientName || customer?.name || ''} · ${address.phone || customer?.phone || ''}</small><p>${formatSavedAddress(address)}</p></span></label>
+      <div class="saved-address-actions"><button type="button" data-edit-address="${address.id}">Edit</button>${address.isDefault ? '' : `<button type="button" data-default-address="${address.id}">Set default</button>`}<button type="button" data-delete-address="${address.id}">Delete</button></div>
+    </article>`).join('');
+  if (useButton) useButton.hidden = addressModalMode !== 'checkout';
+}
+
+function resetAddressForm(address = null) {
+  const form = document.getElementById('addressForm');
+  if (!form) return;
+  form.reset();
+  form.elements.id.value = address?.id || '';
+  form.elements.label.value = address?.label || 'Home';
+  form.elements.recipientName.value = address?.recipientName || customer?.name || '';
+  form.elements.phone.value = address?.phone || customer?.phone || '';
+  form.elements.line1.value = address?.line1 || '';
+  form.elements.line2.value = address?.line2 || '';
+  form.elements.city.value = address?.city || '';
+  form.elements.state.value = address?.state || '';
+  form.elements.pincode.value = address?.pincode || '';
+  form.elements.isDefault.checked = Boolean(address?.isDefault || !savedAddresses.length);
+  form.hidden = false;
+  form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function openDeliveryAddress(mode = 'checkout') {
+  if (!customer) return;
+  addressModalMode = mode;
+  try { await loadSavedAddresses(); } catch (error) { return showToast(error.message); }
+  const modal = document.getElementById('deliveryAddressModal');
+  document.getElementById('deliveryAddressEyebrow').textContent = mode === 'checkout' ? 'Delivery address' : 'Address book';
+  document.getElementById('deliveryAddressTitle').textContent = mode === 'checkout' ? 'Choose delivery address' : 'Saved addresses';
+  document.getElementById('addressForm').hidden = true;
+  renderSavedAddresses();
+  modal.hidden = false; modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
+  if (!savedAddresses.length) resetAddressForm();
+}
+
+function closeDeliveryAddress() {
+  const modal = document.getElementById('deliveryAddressModal');
+  if (!modal) return;
+  modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); modal.hidden = true;
+  document.getElementById('addressForm').hidden = true;
+}
+
+function openPhoneVerify() {
+  const modal = document.getElementById('phoneVerifyModal');
+  const message = document.getElementById('phoneVerifyMessage');
+  if (message) message.textContent = `Enter the OTP to verify ${pendingProfilePhone || 'your new mobile number'}.`;
+  modal.hidden = false; modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
+  document.getElementById('phoneVerifyForm')?.elements.otp?.focus();
+}
+function closePhoneVerify() {
+  const modal = document.getElementById('phoneVerifyModal'); if (!modal) return;
+  modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); modal.hidden = true;
 }
 
 async function openOrders() {
@@ -801,6 +885,7 @@ function downloadOrderSummaryText(order){
   let pdf='%PDF-1.4\n', offsets=[0]; objs.forEach((o,i)=>{offsets.push(pdf.length);pdf+=`${i+1} 0 obj\n${o}\nendobj\n`;}); const xref=pdf.length;pdf+=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`;for(let i=1;i<offsets.length;i++)pdf+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';pdf+=`trailer\n<< /Size ${objs.length+1} /Root 5 0 R >>\nstartxref\n${xref}\n%%EOF`;
   const blob=new Blob([pdf],{type:'application/pdf'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Nivara-Order-${order.orderId||order.razorpay_order_id||'summary'}.pdf`;a.click();URL.revokeObjectURL(a.href);
 }
+
 
 async function openOrders() {
   if (!customer) { window.location.href='account.html'; return; }
@@ -1005,6 +1090,8 @@ document.addEventListener('keydown', event => {
   closeCart();
   closeCheckoutReview();
   closeGuestCheckout();
+  closeDeliveryAddress();
+  closePhoneVerify();
   closeProfile();
   closeOrders();
   closeImageViewer();
@@ -1059,10 +1146,13 @@ async function proceedToPayment() {
     return;
   }
 
-  if (customer && !hasCompleteCheckoutProfile(customer)) {
-    showToast('Please add and verify your mobile number and address.');
+  if (customer && !customer.phoneVerified) {
+    showToast('Your mobile number must be verified before checkout. Please update it from Profile.');
+    return;
+  }
+  if (customer && !selectedAddressId) {
     closeCheckoutReview();
-    openProfile();
+    await openDeliveryAddress('checkout');
     return;
   }
 
@@ -1087,7 +1177,8 @@ async function proceedToPayment() {
         items: cart,
         guest: customer ? null : pendingGuestDetails,
         customer: customer || null,
-        promoCode: appliedPromo?.code || ''
+        promoCode: appliedPromo?.code || '',
+        selectedAddressId: customer ? selectedAddressId : null
       })
     });
     const orderData = await response.json();
@@ -1131,8 +1222,8 @@ async function proceedToPayment() {
       },
       modal: {
         ondismiss() {
-          if (orderData.promo?.code && orderData.orderId) {
-            fetch('/api/promo-release', {
+          if (orderData.orderId) {
+            fetch('/api/cancel-order', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ orderId: orderData.orderId })
@@ -1193,8 +1284,10 @@ function renderCheckoutReview() {
   }
   const customerBox = document.getElementById('checkoutCustomerDetails');
   if (customerBox) {
-    if (customer) customerBox.innerHTML = `<div class="checkout-customer-line"><span>${customer.name || 'Customer'}</span><strong>${customer.phone || 'Mobile not added'}</strong></div><small>${customer.email || ''}</small>`;
-    else customerBox.innerHTML = `<div class="checkout-customer-line"><span>Guest checkout</span><strong>Delivery details required</strong></div><small>You can continue without creating an account.</small>`;
+    if (customer) {
+      const selectedAddress = savedAddresses.find(a => Number(a.id) === Number(selectedAddressId));
+      customerBox.innerHTML = `<div class="checkout-customer-line"><span>${customer.name || 'Customer'}</span><strong>${customer.phone || ''}</strong></div><small>${customer.email || ''}</small>${selectedAddress ? `<div class="checkout-address-summary"><strong>${selectedAddress.label || 'Delivery address'}</strong><p>${formatSavedAddress(selectedAddress)}</p><button class="link-button" type="button" data-change-delivery-address>Change delivery address</button></div>` : '<div class="checkout-address-summary"><strong>Delivery address required</strong></div>'}`;
+    } else customerBox.innerHTML = `<div class="checkout-customer-line"><span>Guest checkout</span><strong>Delivery details required</strong></div><small>You can continue without creating an account.</small>`;
   }
 }
 
@@ -1226,7 +1319,15 @@ async function applyCheckoutPromo() {
   renderCheckoutReview();
 }
 
-function startCheckout() {
+async function startCheckout() {
+  if (!cart.length) return showToast('Your bag is empty');
+  if (customer) {
+    if (!customer.phoneVerified) return showToast('Your mobile number must be verified before checkout.');
+    try { await loadSavedAddresses(); } catch (error) { return showToast(error.message); }
+    closeCart();
+    await openDeliveryAddress('checkout');
+    return;
+  }
   openCheckoutReview();
 }
 
@@ -1263,68 +1364,88 @@ document.getElementById('guestCheckoutForm').addEventListener('submit', event =>
   proceedToPayment();
 });
 
-document.getElementById('resendProfileOtp').addEventListener('click', async () => {
-  const form = document.getElementById('profileForm');
+document.getElementById('manageAddressesButton')?.addEventListener('click', () => openDeliveryAddress('manage'));
+document.getElementById('deliveryAddressClose')?.addEventListener('click', closeDeliveryAddress);
+document.getElementById('phoneVerifyClose')?.addEventListener('click', closePhoneVerify);
+document.getElementById('addAddressButton')?.addEventListener('click', () => resetAddressForm());
+document.getElementById('cancelAddressEdit')?.addEventListener('click', () => { document.getElementById('addressForm').hidden = true; });
+document.getElementById('useSelectedAddress')?.addEventListener('click', () => {
+  if (!selectedAddressId) return showToast('Please select a delivery address.');
+  closeDeliveryAddress();
+  openCheckoutReview();
+});
+
+document.getElementById('savedAddressList')?.addEventListener('change', event => {
+  if (!event.target.matches('input[name="deliveryAddress"]')) return;
+  selectedAddressId = Number(event.target.value);
+  renderSavedAddresses();
+});
+
+document.getElementById('savedAddressList')?.addEventListener('click', async event => {
+  const edit = event.target.closest('[data-edit-address]');
+  const del = event.target.closest('[data-delete-address]');
+  const def = event.target.closest('[data-default-address]');
   try {
-    await accountRequest({
-      action: 'resend-phone-otp',
-      customer,
-      phone: form.elements.phone.value
-    });
-    showToast('OTP resent', 'success');
-  } catch (error) {
-    showToast(error.message);
-  }
+    if (edit) return resetAddressForm(savedAddresses.find(a => Number(a.id) === Number(edit.dataset.editAddress)));
+    if (def) {
+      const data = await accountRequest({ action:'address-default', customer, addressId:Number(def.dataset.defaultAddress) });
+      savedAddresses = data.addresses || []; selectedAddressId = savedAddresses.find(a=>a.isDefault)?.id || selectedAddressId; renderSavedAddresses(); return showToast('Default address updated','success');
+    }
+    if (del) {
+      if (!confirm('Delete this saved address?')) return;
+      const data = await accountRequest({ action:'address-delete', customer, addressId:Number(del.dataset.deleteAddress) });
+      savedAddresses = data.addresses || []; selectedAddressId = savedAddresses.find(a=>a.isDefault)?.id || savedAddresses[0]?.id || null; renderSavedAddresses();
+      if (!savedAddresses.length) resetAddressForm();
+      return showToast('Address deleted','success');
+    }
+  } catch (error) { showToast(error.message); }
+});
+
+document.getElementById('addressForm')?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const address = {
+    id: Number(form.elements.id.value || 0) || undefined,
+    label: form.elements.label.value.trim(), recipientName: form.elements.recipientName.value.trim(), phone: form.elements.phone.value.trim(),
+    line1: form.elements.line1.value.trim(), line2: form.elements.line2.value.trim(), city: form.elements.city.value.trim(), state: form.elements.state.value.trim(), pincode: form.elements.pincode.value.trim(), isDefault: form.elements.isDefault.checked
+  };
+  try {
+    const data = await accountRequest({ action:'address-save', customer, address });
+    savedAddresses = data.addresses || []; selectedAddressId = data.address?.id || savedAddresses.find(a=>a.isDefault)?.id || savedAddresses[0]?.id || null;
+    form.hidden = true; renderSavedAddresses(); showToast('Address saved','success');
+  } catch (error) { showToast(error.message); }
+});
+
+document.getElementById('resendProfileOtp')?.addEventListener('click', async () => {
+  try {
+    await accountRequest({ action:'resend-phone-otp', customer, phone: pendingProfilePhone });
+    showToast('OTP resent','success');
+  } catch (error) { showToast(error.message); }
 });
 
 document.getElementById('profileForm').addEventListener('submit', async event => {
   event.preventDefault();
   const form = event.currentTarget;
-  const payload = {
-    action: 'profile-update',
-    customer,
-    name: form.elements.name.value,
-    phone: form.elements.phone.value,
-    address: {
-      line1: form.elements.line1.value,
-      line2: form.elements.line2.value,
-      city: form.elements.city.value,
-      state: form.elements.state.value,
-      pincode: form.elements.pincode.value
-    }
-  };
-
   try {
-    const data = await accountRequest(payload);
+    const data = await accountRequest({ action:'profile-update', customer, name:form.elements.name.value, phone:form.elements.phone.value });
     saveCustomer(data.customer);
     if (data.otpRequired) {
-      document.getElementById('otpForm').hidden = false;
-      showToast('OTP sent to your email', 'success');
-    } else {
-      showToast('Profile updated', 'success');
-      closeProfile();
-    }
-  } catch (error) {
-    showToast(error.message);
-  }
+      pendingProfilePhone = data.pendingPhone || form.elements.phone.value.trim();
+      closeProfile(); openPhoneVerify(); showToast('OTP sent for the new mobile number','success');
+    } else { showToast('Profile updated','success'); closeProfile(); }
+  } catch (error) { showToast(error.message); }
 });
 
-document.getElementById('otpForm').addEventListener('submit', async event => {
+document.getElementById('phoneVerifyForm')?.addEventListener('submit', async event => {
   event.preventDefault();
   try {
-    const data = await accountRequest({
-      action: 'verify-phone',
-      customer,
-      otp: event.currentTarget.elements.otp.value
-    });
-    saveCustomer(data.customer);
-    fillProfileForm(data.customer);
-    document.getElementById('otpForm').hidden = true;
-    showToast('Mobile number verified', 'success');
-    closeProfile();
-  } catch (error) {
-    showToast(error.message);
-  }
+    const data = await accountRequest({ action:'verify-phone', customer, otp:event.currentTarget.elements.otp.value });
+    saveCustomer(data.customer); pendingProfilePhone=''; event.currentTarget.reset(); closePhoneVerify(); showToast('Mobile number verified','success');
+  } catch (error) { showToast(error.message); }
+});
+
+document.addEventListener('click', event => {
+  if (event.target.closest('[data-change-delivery-address]')) { closeCheckoutReview(); openDeliveryAddress('checkout'); }
 });
 
 document.addEventListener('click', refreshCustomerSession);
