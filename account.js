@@ -1,18 +1,8 @@
-const accountParams = new URLSearchParams(window.location.search);
-const resetToken = accountParams.get('reset');
-const returnToCheckout = accountParams.get('return') === 'checkout' || localStorage.getItem('nivara-return-to-checkout') === '1';
+const resetToken = new URLSearchParams(window.location.search).get('reset');
 const resetConfirmForm = document.getElementById('resetConfirmForm');
 const resetRequestForm = document.getElementById('resetRequestForm');
 let pendingSignupCustomer = null;
-
-function setCheckoutTransitionLoading(isLoading, message = 'Signing you in and loading your delivery details...') {
-  const overlay = document.getElementById('checkoutTransitionOverlay');
-  if (!overlay) return;
-  const messageNode = overlay.querySelector('.checkout-transition-card span');
-  if (messageNode) messageNode.textContent = message;
-  overlay.classList.toggle('open', Boolean(isLoading));
-  overlay.setAttribute('aria-hidden', isLoading ? 'false' : 'true');
-}
+let pendingSignupPhone = '';
 
 document.querySelectorAll('form').forEach(form => form.reset());
 
@@ -36,17 +26,11 @@ function saveCustomerAndGoHome(customer) {
   localStorage.setItem('nivara-customer', JSON.stringify(customer));
   localStorage.setItem('nivara-customer-session', String(Date.now()));
   showToast('Welcome to Nivara Jewellery', 'success');
-  if (returnToCheckout) {
-    setCheckoutTransitionLoading(true);
-  }
+
+  const returnToCheckout = new URLSearchParams(window.location.search).get('return') === 'checkout';
   setTimeout(() => {
-    if (returnToCheckout) {
-      localStorage.setItem('nivara-return-to-checkout', '1');
-      window.location.href = 'index.html?checkout=1';
-    } else {
-      window.location.href = 'index.html';
-    }
-  }, returnToCheckout ? 250 : 650);
+    window.location.href = returnToCheckout ? '/?checkout=1' : '/';
+  }, 650);
 }
 
 async function accountRequest(payload) {
@@ -92,25 +76,17 @@ document.addEventListener('click', event => {
 
 document.getElementById('loginForm').addEventListener('submit', async event => {
   event.preventDefault();
-  const form = event.currentTarget;
-  const submitButton = form.querySelector('button[type="submit"]');
-  const values = Object.fromEntries(new FormData(form).entries());
-  if (submitButton) {
-    submitButton.disabled = true;
-    submitButton.textContent = returnToCheckout ? 'Signing in...' : 'Login';
-  }
+  const values = Object.fromEntries(new FormData(event.currentTarget).entries());
   try {
     const data = await accountRequest({ action: 'login', ...values });
     saveCustomerAndGoHome(data.customer);
   } catch (error) {
-    if (submitButton) {
-      submitButton.disabled = false;
-      submitButton.textContent = 'Login';
-    }
-    setCheckoutTransitionLoading(false);
     showToast(error.message);
   }
 });
+
+// Enable login only after the JavaScript submit handler is ready.
+document.getElementById('loginSubmit').disabled = false;
 
 document.getElementById('signupForm').addEventListener('submit', async event => {
   event.preventDefault();
@@ -118,10 +94,11 @@ document.getElementById('signupForm').addEventListener('submit', async event => 
   try {
     const data = await accountRequest({ action: 'signup', ...values });
     pendingSignupCustomer = data.pendingCustomer;
+    pendingSignupPhone = values.phone;
     document.querySelectorAll('.auth-panel').forEach(panel => panel.classList.remove('active'));
     document.getElementById('signupOtpForm').hidden = false;
     document.getElementById('signupOtpForm').classList.add('active');
-    showToast('Verification code sent to your email.', 'success');
+    showToast('OTP sent. Please verify mobile.', 'success');
   } catch (error) {
     showToast(error.message);
   }
@@ -138,6 +115,7 @@ document.getElementById('signupOtpForm').addEventListener('submit', async event 
       otp: values.otp
     });
     pendingSignupCustomer = null;
+    pendingSignupPhone = '';
     saveCustomerAndGoHome(data.customer);
   } catch (error) {
     showToast(error.message);
@@ -147,11 +125,11 @@ document.getElementById('signupOtpForm').addEventListener('submit', async event 
 document.getElementById('resendSignupOtp').addEventListener('click', async () => {
   try {
     await accountRequest({
-      action: 'resend-email-otp',
-      customerId: pendingSignupCustomer?.id,
-      email: pendingSignupCustomer?.email
+      action: 'resend-phone-otp',
+      customer: pendingSignupCustomer,
+      phone: pendingSignupPhone
     });
-    showToast('Verification code resent', 'success');
+    showToast('OTP resent', 'success');
   } catch (error) {
     showToast(error.message);
   }
