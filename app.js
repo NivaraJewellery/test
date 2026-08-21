@@ -207,14 +207,25 @@ async function applyPromoCode() {
     return;
   }
 
-  if (!cart.length) return showToast('Add an item to your bag before applying a promo code.');
-  if (!code) return showToast('Enter a promo code.');
+  const showPromoMessage = (message, type = 'error') => {
+    if (status) {
+      status.textContent = message;
+      status.classList.toggle('success', type === 'success');
+      status.classList.toggle('error', type === 'error');
+      status.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+      showToast(message, type === 'success' ? 'success' : undefined);
+    }
+  };
+
+  if (!cart.length) return showPromoMessage('Add an item to your bag before applying a promo code.');
+  if (!code) return showPromoMessage('Enter a promo code.');
   if (!customer || !ensureActiveCustomerSession()) {
-    showToast('Please sign in to use the launch promo code.');
+    showPromoMessage('Please sign in to your Nivara account before applying this promo code.');
     return;
   }
   if (!customer.phoneVerified || !customer.phone) {
-    showToast('Please verify your registered mobile number before using the promo code.');
+    showPromoMessage('Please verify your registered mobile number before applying this promo code.');
     return;
   }
 
@@ -233,6 +244,7 @@ async function applyPromoCode() {
     if (status) {
       status.textContent = `${data.percent}% launch discount applied.`;
       status.classList.add('success');
+      status.classList.remove('error');
     }
     renderCart();
     showToast(`${data.percent}% promo applied`, 'success');
@@ -241,6 +253,7 @@ async function applyPromoCode() {
     if (status) {
       status.textContent = error.message;
       status.classList.remove('success');
+      status.classList.add('error');
     }
     showToast(error.message);
   } finally {

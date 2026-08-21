@@ -25,3 +25,24 @@ body.checkout-review-open{overflow:hidden}
 .checkout-review-card.payment-loading .checkout-review-back{pointer-events:none;opacity:.45}
 @keyframes nivara-payment-spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.payment-button-spinner{animation-duration:1.5s}}
+
+/* Keep promo validation feedback inside the checkout review so it cannot hide behind the modal. */
+.checkout-promo-status.error{
+  color:#9b2f25;
+  background:#fff1ee;
+  border:1px solid #efc7bf;
+  border-radius:8px;
+  padding:8px 10px;
+  min-height:0;
+  font-weight:600;
+  line-height:1.35;
+}
+.checkout-promo-status:empty{display:none}
+.checkout-promo-status.success{
+  background:#eef7ec;
+  border:1px solid #cfe3ca;
+  border-radius:8px;
+  padding:8px 10px;
+  min-height:0;
+  font-weight:600;
+}
