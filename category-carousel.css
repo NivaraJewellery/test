@@ -172,3 +172,29 @@
   .collection-carousel .category b { font-size: 11px; }
   .collection-carousel .category small { font-size: 10px; margin-top: 5px; }
 }
+
+/* v9: fully reset legacy .category span positioning so image and copy occupy separate rows. */
+.collection-carousel .category > .category-image-wrap,
+.collection-carousel .category > .category-card-copy {
+  position: static !important;
+  inset: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  transform: none !important;
+  opacity: 1 !important;
+  color: inherit !important;
+  font-size: inherit !important;
+  line-height: normal !important;
+}
+
+.collection-carousel .category > .category-image-wrap {
+  flex: 0 0 198px;
+}
+
+.collection-carousel .category > .category-card-copy {
+  flex: 1 0 74px;
+  width: 100%;
+  box-sizing: border-box;
+}
