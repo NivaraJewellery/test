@@ -16,6 +16,16 @@ let productPage = 1;
 const CUSTOMER_SESSION_MS = 30 * 60 * 1000;
 const PRODUCTS_PER_PAGE = 8;
 const WHATSAPP_ORDER_NUMBER = '917899890736';
+
+
+function setCheckoutTransitionLoading(isLoading, message = 'Loading your saved delivery details...') {
+  const overlay = document.getElementById('checkoutTransitionOverlay');
+  if (!overlay) return;
+  const messageNode = overlay.querySelector('.checkout-transition-card span');
+  if (messageNode) messageNode.textContent = message;
+  overlay.classList.toggle('open', Boolean(isLoading));
+  overlay.setAttribute('aria-hidden', isLoading ? 'false' : 'true');
+}
 const LAUNCH_PROMO_CODE = 'NIVARA5';
 const LAUNCH_PROMO_PERCENT = 5;
 const LAUNCH_PROMO_START = Date.parse('2026-08-19T18:30:00.000Z'); // TEST: active from 20 Aug 2026, 12:00 AM IST
@@ -1396,20 +1406,29 @@ if (isCustomerSessionExpired()) {
 }
 async function initializeStorefront() {
   renderCustomerMenu();
-  await loadProducts();
-
   const params = new URLSearchParams(window.location.search);
   const shouldResumeCheckout = params.get('checkout') === '1' || localStorage.getItem('nivara-return-to-checkout') === '1';
+
   if (shouldResumeCheckout) {
-    localStorage.removeItem('nivara-return-to-checkout');
-    if (params.has('checkout')) {
-      params.delete('checkout');
-      const query = params.toString();
-      window.history.replaceState({}, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
+    setCheckoutTransitionLoading(true, 'Loading your bag and delivery details...');
+  }
+
+  try {
+    await loadProducts();
+
+    if (shouldResumeCheckout) {
+      localStorage.removeItem('nivara-return-to-checkout');
+      if (params.has('checkout')) {
+        params.delete('checkout');
+        const query = params.toString();
+        window.history.replaceState({}, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
+      }
+      if (customer && cart.length) {
+        await startCheckout();
+      }
     }
-    if (customer && cart.length) {
-      await startCheckout();
-    }
+  } finally {
+    setCheckoutTransitionLoading(false);
   }
 }
 initializeStorefront();

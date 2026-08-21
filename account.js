@@ -5,6 +5,15 @@ const resetConfirmForm = document.getElementById('resetConfirmForm');
 const resetRequestForm = document.getElementById('resetRequestForm');
 let pendingSignupCustomer = null;
 
+function setCheckoutTransitionLoading(isLoading, message = 'Signing you in and loading your delivery details...') {
+  const overlay = document.getElementById('checkoutTransitionOverlay');
+  if (!overlay) return;
+  const messageNode = overlay.querySelector('.checkout-transition-card span');
+  if (messageNode) messageNode.textContent = message;
+  overlay.classList.toggle('open', Boolean(isLoading));
+  overlay.setAttribute('aria-hidden', isLoading ? 'false' : 'true');
+}
+
 document.querySelectorAll('form').forEach(form => form.reset());
 
 function showToast(message, type = '') {
@@ -27,6 +36,9 @@ function saveCustomerAndGoHome(customer) {
   localStorage.setItem('nivara-customer', JSON.stringify(customer));
   localStorage.setItem('nivara-customer-session', String(Date.now()));
   showToast('Welcome to Nivara Jewellery', 'success');
+  if (returnToCheckout) {
+    setCheckoutTransitionLoading(true);
+  }
   setTimeout(() => {
     if (returnToCheckout) {
       localStorage.setItem('nivara-return-to-checkout', '1');
@@ -34,7 +46,7 @@ function saveCustomerAndGoHome(customer) {
     } else {
       window.location.href = 'index.html';
     }
-  }, 650);
+  }, returnToCheckout ? 250 : 650);
 }
 
 async function accountRequest(payload) {
@@ -80,11 +92,22 @@ document.addEventListener('click', event => {
 
 document.getElementById('loginForm').addEventListener('submit', async event => {
   event.preventDefault();
-  const values = Object.fromEntries(new FormData(event.currentTarget).entries());
+  const form = event.currentTarget;
+  const submitButton = form.querySelector('button[type="submit"]');
+  const values = Object.fromEntries(new FormData(form).entries());
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.textContent = returnToCheckout ? 'Signing in...' : 'Login';
+  }
   try {
     const data = await accountRequest({ action: 'login', ...values });
     saveCustomerAndGoHome(data.customer);
   } catch (error) {
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = 'Login';
+    }
+    setCheckoutTransitionLoading(false);
     showToast(error.message);
   }
 });

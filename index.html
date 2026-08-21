@@ -51,6 +51,7 @@
   <link rel="stylesheet" href="category-carousel.css" />
   <link rel="stylesheet" href="header-fix.css" />
   <link rel="stylesheet" href="launch-fixes.css" />
+  <link rel="stylesheet" href="checkout-transition.css" />
 </head>
 <body>
   <div class="announcement" id="announcementBar">Complimentary shipping on orders above &#8377;1,999</div>
@@ -157,6 +158,13 @@
   <section class="image-viewer" id="imageViewer" aria-hidden="true" hidden><div class="image-viewer-card"><button class="image-viewer-close" id="imageViewerClose" type="button" aria-label="Close image viewer">&times;</button><img id="imageViewerPhoto" src="" alt="" /><div class="image-viewer-controls"><button id="imageViewerPrev" type="button">Previous</button><span class="image-viewer-count" id="imageViewerCount">1/1</span><button id="imageViewerNext" type="button">Next</button><label for="imageZoomSlider">Zoom</label><input id="imageZoomSlider" type="range" min="1" max="3" step="0.05" value="1" /><span id="imageZoomLevel">100%</span><button id="imageZoomReset" type="button">Reset</button></div></div></section>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <div class="checkout-transition-overlay" id="checkoutTransitionOverlay" aria-live="polite" aria-busy="true">
+    <div class="checkout-transition-card">
+      <div class="checkout-transition-spinner" aria-hidden="true"></div>
+      <strong>Preparing your checkout</strong>
+      <span>Loading your saved delivery details...</span>
+    </div>
+  </div>
   <script src="app.js"></script>
   <script src="hero-image.js"></script>
 </body>
