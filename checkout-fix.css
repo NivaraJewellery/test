@@ -46,3 +46,35 @@ body.checkout-review-open{overflow:hidden}
   min-height:0;
   font-weight:600;
 }
+
+/* High-visibility checkout promo validation. Keep it attached to the promo field. */
+.checkout-promo-status.error{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  margin:10px 0 0;
+  padding:11px 12px;
+  color:#7d241c;
+  background:#fff0ed;
+  border:1px solid #d98d82;
+  border-left:4px solid #a93b2f;
+  border-radius:9px;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.4;
+}
+.checkout-promo-status.error::before{
+  content:'!';
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:18px;
+  height:18px;
+  flex:0 0 18px;
+  margin-top:1px;
+  border-radius:50%;
+  background:#a93b2f;
+  color:#fff;
+  font-size:12px;
+  font-weight:800;
+}

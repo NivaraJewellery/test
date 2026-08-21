@@ -183,7 +183,11 @@ function resetAppliedPromo(message = '') {
   appliedPromo = null;
   const input = document.getElementById('promoCode') || document.getElementById('checkoutPromoCode');
   const button = document.getElementById('promoApplyButton') || document.getElementById('checkoutPromoApply');
-  const status = document.getElementById('promoStatus') || document.getElementById('checkoutPromoStatus');
+  const checkoutModal = document.getElementById('checkoutReviewModal');
+  const checkoutIsOpen = Boolean(checkoutModal && !checkoutModal.hidden && checkoutModal.classList.contains('open'));
+  const status = checkoutIsOpen
+    ? document.getElementById('checkoutPromoStatus')
+    : (document.getElementById('promoStatus') || document.getElementById('checkoutPromoStatus'));
   if (input) input.value = '';
   if (button) {
     button.textContent = 'Apply';
@@ -192,13 +196,18 @@ function resetAppliedPromo(message = '') {
   if (status) {
     status.textContent = message;
     status.classList.remove('success');
+    status.classList.toggle('error', Boolean(message));
   }
 }
 
 async function applyPromoCode() {
   const input = document.getElementById('promoCode') || document.getElementById('checkoutPromoCode');
   const button = document.getElementById('promoApplyButton') || document.getElementById('checkoutPromoApply');
-  const status = document.getElementById('promoStatus') || document.getElementById('checkoutPromoStatus');
+  const checkoutModal = document.getElementById('checkoutReviewModal');
+  const checkoutIsOpen = Boolean(checkoutModal && !checkoutModal.hidden && checkoutModal.classList.contains('open'));
+  const status = checkoutIsOpen
+    ? document.getElementById('checkoutPromoStatus')
+    : (document.getElementById('promoStatus') || document.getElementById('checkoutPromoStatus'));
   const code = String(input?.value || '').trim().toUpperCase();
 
   if (appliedPromo) {
@@ -1133,8 +1142,14 @@ function renderCheckoutReview() {
   if (promoInput) promoInput.value = appliedPromo?.code || '';
   if (promoButton) promoButton.textContent = appliedPromo ? 'Remove' : 'Apply';
   if (promoStatus) {
-    promoStatus.textContent = appliedPromo ? `${appliedPromo.percent}% launch discount applied.` : '';
-    promoStatus.classList.toggle('success', Boolean(appliedPromo));
+    if (appliedPromo) {
+      promoStatus.textContent = `${appliedPromo.percent}% launch discount applied.`;
+      promoStatus.classList.add('success');
+      promoStatus.classList.remove('error');
+    } else if (!promoStatus.classList.contains('error')) {
+      promoStatus.textContent = '';
+      promoStatus.classList.remove('success');
+    }
   }
   const customerBox = document.getElementById('checkoutCustomerDetails');
   if (customerBox) {
