@@ -3,7 +3,6 @@ let collections = [];
 let cart = JSON.parse(localStorage.getItem('nivara-cart') || '[]');
 let activeFilter = 'all';
 let customer = JSON.parse(localStorage.getItem('nivara-customer') || 'null');
-let pendingGuestDetails = null;
 let savedAddresses = [];
 let selectedAddressId = null;
 let addressModalMode = 'checkout';
@@ -879,20 +878,6 @@ async function openOrders() {
   } catch(error){list.innerHTML=`<p>${error.message}</p>`;}
 }
 
-function openGuestCheckout() {
-  const modal = document.getElementById('guestCheckoutModal');
-  modal.hidden = false;
-  modal.classList.add('open');
-  modal.setAttribute('aria-hidden', 'false');
-}
-
-function closeGuestCheckout() {
-  const modal = document.getElementById('guestCheckoutModal');
-  modal.classList.remove('open');
-  modal.setAttribute('aria-hidden', 'true');
-  modal.hidden = true;
-}
-
 function openCart() {
   document.getElementById('cartPanel').classList.add('open');
   document.getElementById('overlay').classList.add('open');
@@ -1013,7 +998,6 @@ document.getElementById('cartToggle').addEventListener('click', openCart);
 document.getElementById('cartClose').addEventListener('click', closeCart);
 document.getElementById('overlay').addEventListener('click', closeCart);
 document.getElementById('continueShopping').addEventListener('click', closeCart);
-document.getElementById('guestCheckoutClose').addEventListener('click', closeGuestCheckout);
 document.getElementById('imageViewerClose').addEventListener('click', closeImageViewer);
 document.getElementById('imageViewer').addEventListener('click', event => {
   if (event.target.id === 'imageViewer') closeImageViewer();
@@ -1072,7 +1056,6 @@ document.addEventListener('keydown', event => {
   if (event.key !== 'Escape') return;
   closeCart();
   closeCheckoutReview();
-  closeGuestCheckout();
   closeDeliveryAddress();
   closeProfile();
   closeOrders();
@@ -1122,17 +1105,13 @@ function setCheckoutPaymentLoading(isLoading) {
 async function proceedToPayment() {
   if (!cart.length) return showToast('Your bag is empty');
 
-  if (!customer && !pendingGuestDetails) {
-    closeCheckoutReview();
-    openGuestCheckout();
+  if (!customer) {
+    localStorage.setItem('nivara-return-to-checkout', '1');
+    window.location.href = 'account.html?return=checkout';
     return;
   }
 
-  if (customer && !customer.phoneVerified) {
-    showToast('Your mobile number must be verified before checkout. Please update it from Profile.');
-    return;
-  }
-  if (customer && !selectedAddressId) {
+  if (!selectedAddressId) {
     closeCheckoutReview();
     await openDeliveryAddress('checkout');
     return;
@@ -1157,16 +1136,15 @@ async function proceedToPayment() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         items: cart,
-        guest: customer ? null : pendingGuestDetails,
-        customer: customer || null,
+        customer,
         promoCode: appliedPromo?.code || '',
-        selectedAddressId: customer ? selectedAddressId : null
+        selectedAddressId
       })
     });
     const orderData = await response.json();
     if (!response.ok) throw new Error(orderData.error || 'Unable to start payment.');
 
-    const contact = customer || pendingGuestDetails;
+    const contact = customer;
     const razorpay = new window.Razorpay({
       key: orderData.keyId,
       amount: orderData.amount,
@@ -1194,8 +1172,6 @@ async function proceedToPayment() {
       resetAppliedPromo();
       clearCart();
       closeCart();
-      closeGuestCheckout();
-      pendingGuestDetails = null;
       await loadProducts();
       showOrderSummary(completedOrder, true);
         } catch (error) {
@@ -1269,7 +1245,7 @@ function renderCheckoutReview() {
     if (customer) {
       const selectedAddress = savedAddresses.find(a => Number(a.id) === Number(selectedAddressId));
       customerBox.innerHTML = `<div class="checkout-customer-line"><span>${customer.name || 'Customer'}</span><strong>${customer.phone || ''}</strong></div><small>${customer.email || ''}</small>${selectedAddress ? `<div class="checkout-address-summary"><strong>${selectedAddress.label || 'Delivery address'}</strong><p>${formatSavedAddress(selectedAddress)}</p><button class="link-button" type="button" data-change-delivery-address>Change delivery address</button></div>` : '<div class="checkout-address-summary"><strong>Delivery address required</strong></div>'}`;
-    } else customerBox.innerHTML = `<div class="checkout-customer-line"><span>Guest checkout</span><strong>Delivery details required</strong></div><small>You can continue without creating an account.</small>`;
+    } else customerBox.innerHTML = `<div class="checkout-customer-line"><span>Sign in required</span><strong>Secure checkout</strong></div><small>Please sign in to continue to payment.</small>`;
   }
 }
 
@@ -1303,31 +1279,32 @@ async function applyCheckoutPromo() {
 
 async function startCheckout() {
   if (!cart.length) return showToast('Your bag is empty');
-  if (customer) {
-    if (!customer.phoneVerified) return showToast('Your mobile number must be verified before checkout.');
-    try { await loadSavedAddresses(); } catch (error) { return showToast(error.message); }
 
-    closeCart();
+  if (!customer) {
+    localStorage.setItem('nivara-return-to-checkout', '1');
+    window.location.href = 'account.html?return=checkout';
+    return;
+  }
 
-    // Keep checkout fast when there is no delivery choice to make.
-    // 0 addresses: ask the customer to add one.
-    // 1 address: use it automatically and go straight to checkout review.
-    // 2+ addresses: let the customer choose the delivery address.
-    if (savedAddresses.length === 0) {
-      await openDeliveryAddress('checkout');
-      return;
-    }
+  try { await loadSavedAddresses(); } catch (error) { return showToast(error.message); }
 
-    if (savedAddresses.length === 1) {
-      selectedAddressId = savedAddresses[0].id;
-      openCheckoutReview();
-      return;
-    }
+  closeCart();
 
+  // 0 addresses: ask the customer to add one.
+  // 1 address: use it automatically and go straight to checkout review.
+  // 2+ addresses: let the customer choose the delivery address.
+  if (savedAddresses.length === 0) {
     await openDeliveryAddress('checkout');
     return;
   }
-  openCheckoutReview();
+
+  if (savedAddresses.length === 1) {
+    selectedAddressId = savedAddresses[0].id;
+    openCheckoutReview();
+    return;
+  }
+
+  await openDeliveryAddress('checkout');
 }
 
 document.getElementById('checkoutButton')?.addEventListener('click', startCheckout);
@@ -1342,26 +1319,6 @@ document.getElementById('checkoutContinueButton')?.addEventListener('click', () 
 document.getElementById('whatsappCheckoutButton')?.addEventListener('click', continueOrderOnWhatsApp);
 document.getElementById('profileClose').addEventListener('click', closeProfile);
 document.getElementById('ordersClose').addEventListener('click', closeOrders);
-
-document.getElementById('guestCheckoutForm').addEventListener('change', event => {
-  if (!event.target.matches('[name="sameBilling"]')) return;
-  document.getElementById('billingAddressWrap').hidden = event.target.checked;
-});
-
-document.getElementById('guestCheckoutForm').addEventListener('submit', event => {
-  event.preventDefault();
-  const form = event.currentTarget;
-  pendingGuestDetails = {
-    name: form.elements.name.value.trim(),
-    email: form.elements.email.value.trim().toLowerCase(),
-    phone: form.elements.phone.value.trim(),
-    shippingAddress: form.elements.shippingAddress.value.trim(),
-    billingAddress: form.elements.sameBilling.checked ? form.elements.shippingAddress.value.trim() : form.elements.billingAddress.value.trim()
-  };
-  if (!pendingGuestDetails.billingAddress) return showToast('Billing address is required');
-  closeGuestCheckout();
-  proceedToPayment();
-});
 
 document.getElementById('manageAddressesButton')?.addEventListener('click', () => openDeliveryAddress('manage'));
 document.getElementById('deliveryAddressClose')?.addEventListener('click', closeDeliveryAddress);
@@ -1437,8 +1394,25 @@ if (isCustomerSessionExpired()) {
   clearCart();
   clearCustomerSession();
 }
-renderCustomerMenu();
-loadProducts();
+async function initializeStorefront() {
+  renderCustomerMenu();
+  await loadProducts();
+
+  const params = new URLSearchParams(window.location.search);
+  const shouldResumeCheckout = params.get('checkout') === '1' || localStorage.getItem('nivara-return-to-checkout') === '1';
+  if (shouldResumeCheckout) {
+    localStorage.removeItem('nivara-return-to-checkout');
+    if (params.has('checkout')) {
+      params.delete('checkout');
+      const query = params.toString();
+      window.history.replaceState({}, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
+    }
+    if (customer && cart.length) {
+      await startCheckout();
+    }
+  }
+}
+initializeStorefront();
 
 
 

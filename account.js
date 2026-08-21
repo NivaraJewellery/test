@@ -1,4 +1,6 @@
-const resetToken = new URLSearchParams(window.location.search).get('reset');
+const accountParams = new URLSearchParams(window.location.search);
+const resetToken = accountParams.get('reset');
+const returnToCheckout = accountParams.get('return') === 'checkout' || localStorage.getItem('nivara-return-to-checkout') === '1';
 const resetConfirmForm = document.getElementById('resetConfirmForm');
 const resetRequestForm = document.getElementById('resetRequestForm');
 let pendingSignupCustomer = null;
@@ -26,7 +28,12 @@ function saveCustomerAndGoHome(customer) {
   localStorage.setItem('nivara-customer-session', String(Date.now()));
   showToast('Welcome to Nivara Jewellery', 'success');
   setTimeout(() => {
-    window.location.href = 'index.html';
+    if (returnToCheckout) {
+      localStorage.setItem('nivara-return-to-checkout', '1');
+      window.location.href = 'index.html?checkout=1';
+    } else {
+      window.location.href = 'index.html';
+    }
   }, 650);
 }
 
