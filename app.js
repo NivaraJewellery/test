@@ -304,10 +304,14 @@ function scrollCollections(direction) {
 function renderCollections() {
   if (!collectionsNode) return;
   collectionsNode.innerHTML = collections.map(collection => `
-    <a href="#shop" class="category" data-collection-filter="${collection.slug}">
-      <img src="${collection.image || 'assets/logo.png'}" alt="${collection.name}" loading="lazy" />
-      <b>${collection.name}</b>
-      <small>${collection.product_count || 0} piece${Number(collection.product_count) === 1 ? '' : 's'}</small>
+    <a href="#shop" class="category" data-collection-filter="${collection.slug}" aria-label="Explore ${collection.name}">
+      <span class="category-image-wrap">
+        <img src="${collection.image || 'assets/logo.png'}" alt="${collection.name}" loading="lazy" />
+      </span>
+      <span class="category-card-copy">
+        <b>${collection.name}</b>
+        <small>Explore Now <span aria-hidden="true">&rarr;</span></small>
+      </span>
     </a>
   `).join('');
   collectionsNode.scrollLeft = 0;
@@ -635,8 +639,9 @@ function renderCustomerMenu() {
   userIcon.textContent = customer ? String(customer.name || customer.email || 'N').trim().charAt(0).toUpperCase() : 'N';
   userIcon.title = customer ? `Logged in as ${customer.name || customer.email}` : 'Login or signup';
   if (accountLink) {
-    accountLink.textContent = customer ? 'My Account' : 'Account';
-    accountLink.href = customer ? '#profile' : 'account.html';
+    accountLink.textContent = 'Account';
+    accountLink.href = 'account.html';
+    accountLink.hidden = Boolean(customer);
   }
 }
 
@@ -754,25 +759,56 @@ function renderOrderCard(order) {
   `;
 }
 
+let currentOrderSummary = null;
+
+function orderSummaryMarkup(order) {
+  const products = order.products || normalizeOrderDetails(order).products || [];
+  const details = order.customer ? { customer: order.customer } : normalizeOrderDetails(order);
+  const customerDetails = order.customer || details.customer || {};
+  const promo = order.promo || (typeof order.items === 'string' ? JSON.parse(order.items)?.promo : order.items?.promo) || null;
+  const subtotal = Number(order.subtotal != null ? order.subtotal : (promo?.subtotal != null ? promo.subtotal : products.reduce((sum,item)=>sum+Number(item.price||0)*Number(item.quantity||1),0)));
+  const amount = Number(order.amount || promo?.total || subtotal);
+  const discount = Number(promo?.discount || Math.max(0, subtotal-amount));
+  const dateValue = order.createdAt || order.created_at || new Date().toISOString();
+  const address = customerDetails.shippingAddress || customerDetails.billingAddress || [customerDetails.address?.line1,customerDetails.address?.line2,customerDetails.address?.city,customerDetails.address?.state,customerDetails.address?.pincode].filter(Boolean).join(', ') || 'Not available';
+  return `<div class="order-summary-success">✓ Payment successful — your order is confirmed.</div>
+    <div class="order-summary-meta"><div><small>Order number</small><br><strong>${order.orderId || order.razorpay_order_id || '-'}</strong></div><div><small>Order date</small><br><strong>${new Date(dateValue).toLocaleString('en-IN')}</strong></div><div><small>Payment reference</small><br><strong>${order.paymentId || order.razorpay_payment_id || '-'}</strong></div><div><small>Status</small><br><strong>Confirmed</strong></div></div>
+    <h3>Items ordered</h3><div class="order-summary-items">${products.map(item=>`<div class="order-summary-item">${item.image?`<img src="${item.image}" alt="">`:'<span></span>'}<div><strong>${item.name || `Product ${item.id}`}</strong><small>Qty ${item.quantity || 1} × ${formatPrice(item.price || 0)}</small></div><strong>${formatPrice(Number(item.price||0)*Number(item.quantity||1))}</strong></div>`).join('')}</div>
+    <div class="order-summary-customer"><strong>Delivery details</strong><p>${customerDetails.name || ''}${customerDetails.phone ? ` · ${customerDetails.phone}`:''}<br>${address}</p></div>
+    <div class="order-summary-totals"><div class="order-summary-total-row"><span>Subtotal</span><strong>${formatPrice(subtotal)}</strong></div>${discount>0?`<div class="order-summary-total-row"><span>Promo discount${promo?.percent?` (${promo.percent}%)`:''}</span><strong>- ${formatPrice(discount)}</strong></div>`:''}<div class="order-summary-total-row grand"><span>Total paid</span><strong>${formatPrice(amount)}</strong></div></div>`;
+}
+
+function showOrderSummary(order, confirmed = false) {
+  currentOrderSummary = order;
+  document.getElementById('orderSummaryEyebrow').textContent = confirmed ? 'Order confirmed' : 'Order details';
+  document.getElementById('orderSummaryTitle').textContent = confirmed ? 'Thank you for your order' : (order.orderId || order.razorpay_order_id || 'Order summary');
+  document.getElementById('orderSummaryContent').innerHTML = orderSummaryMarkup(order);
+  document.getElementById('backToOrders').hidden = confirmed;
+  const modal=document.getElementById('orderSummaryModal'); modal.hidden=false; modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
+}
+function closeOrderSummary(){const modal=document.getElementById('orderSummaryModal');modal.classList.remove('open');modal.setAttribute('aria-hidden','true');modal.hidden=true;}
+function downloadOrderSummaryText(order){
+  const products=order.products || normalizeOrderDetails(order).products || []; const promo=order.promo || null;
+  const lines=['NIVARA JEWELLERY','ORDER SUMMARY','',`Order: ${order.orderId||order.razorpay_order_id||'-'}`,`Payment: ${order.paymentId||order.razorpay_payment_id||'-'}`,`Date: ${new Date(order.createdAt||order.created_at||Date.now()).toLocaleString('en-IN')}`,'','Items:',...products.map(i=>`${i.name} | Qty ${i.quantity||1} | Rs. ${Number(i.price||0)*Number(i.quantity||1)}`),'',promo?.discount?`Promo discount (${promo.percent||0}%): - Rs. ${promo.discount}`:'',`Total paid: Rs. ${order.amount||promo?.total||0}`].filter(v=>v!==undefined);
+  const esc=t=>String(t).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)').replace(/[^\x20-\x7E]/g,' ');
+  let y=790, content='BT /F1 11 Tf 50 810 Td ';
+  lines.forEach((line,i)=>{if(i) content+=' 0 -18 Td '; content+=`(${esc(line)}) Tj`;}); content+=' ET';
+  const objs=[]; const add=x=>{objs.push(x);return objs.length};
+  const font=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
+  const stream=add(`<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+  const page=add(`<< /Type /Page /Parent 4 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 ${font} 0 R >> >> /Contents ${stream} 0 R >>`);
+  add(`<< /Type /Pages /Kids [${page} 0 R] /Count 1 >>`); add('<< /Type /Catalog /Pages 4 0 R >>');
+  let pdf='%PDF-1.4\n', offsets=[0]; objs.forEach((o,i)=>{offsets.push(pdf.length);pdf+=`${i+1} 0 obj\n${o}\nendobj\n`;}); const xref=pdf.length;pdf+=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`;for(let i=1;i<offsets.length;i++)pdf+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';pdf+=`trailer\n<< /Size ${objs.length+1} /Root 5 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  const blob=new Blob([pdf],{type:'application/pdf'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Nivara-Order-${order.orderId||order.razorpay_order_id||'summary'}.pdf`;a.click();URL.revokeObjectURL(a.href);
+}
+
 async function openOrders() {
-  if (!customer) {
-    window.location.href = 'account.html';
-    return;
-  }
-
-  const list = document.getElementById('ordersList');
-  list.innerHTML = '<p>Loading your orders...</p>';
-  const modal = document.getElementById('ordersModal');
-  modal.hidden = false;
-  modal.classList.add('open');
-  modal.setAttribute('aria-hidden', 'false');
-
-  try {
-    const data = await accountRequest({ action: 'orders', customer });
-    list.innerHTML = data.orders.length ? data.orders.map(renderOrderCard).join('') : '<p>No orders yet. Your first sparkle is waiting.</p>';
-  } catch (error) {
-    list.innerHTML = `<p>${error.message}</p>`;
-  }
+  if (!customer) { window.location.href='account.html'; return; }
+  const list=document.getElementById('ordersList'); list.innerHTML='<p>Loading your orders...</p>';
+  const modal=document.getElementById('ordersModal');modal.hidden=false;modal.classList.add('open');modal.setAttribute('aria-hidden','false');
+  try { const data=await accountRequest({action:'orders',customer}); window.nivaraOrders=data.orders||[];
+    list.innerHTML=window.nivaraOrders.length?window.nivaraOrders.map((order,index)=>`<div class="order-history-row"><button class="order-history-link" type="button" data-order-index="${index}">${order.razorpay_order_id||'Order'}</button><small>${new Date(order.created_at).toLocaleDateString('en-IN')} · ${order.razorpay_payment_id?'Paid':'Payment pending'}</small><strong>${formatPrice(order.amount)}</strong></div>`).join(''):'<p>No orders yet. Your first sparkle is waiting.</p>';
+  } catch(error){list.innerHTML=`<p>${error.message}</p>`;}
 }
 
 function openGuestCheckout() {
@@ -1078,13 +1114,14 @@ async function proceedToPayment() {
           const verifyData = await verifyResponse.json();
           if (!verifyResponse.ok) throw new Error(verifyData.error || 'Payment verification failed.');
 
+      const completedOrder = verifyData.order || { orderId: verifyData.orderId, paymentId: verifyData.paymentId, amount: orderData.amount / 100, products: cart.map(item => ({...item, image: products.find(p => p.id === item.id)?.image || ''})), customer: contact || {} };
       resetAppliedPromo();
       clearCart();
       closeCart();
       closeGuestCheckout();
       pendingGuestDetails = null;
       await loadProducts();
-      showToast('Payment successful. Your order is confirmed.', 'success');
+      showOrderSummary(completedOrder, true);
         } catch (error) {
           showToast(error.message || 'Payment verification failed.');
         }
@@ -1298,3 +1335,13 @@ loadProducts();
 
 
 
+
+
+document.addEventListener('click', event => {
+  const orderLink=event.target.closest('[data-order-index]');
+  if(orderLink){const order=window.nivaraOrders?.[Number(orderLink.dataset.orderIndex)];if(order){closeOrders();showOrderSummary(order,false);}}
+});
+document.getElementById('orderSummaryClose')?.addEventListener('click',closeOrderSummary);
+document.getElementById('downloadOrderSummary')?.addEventListener('click',()=>{if(currentOrderSummary)downloadOrderSummaryText(currentOrderSummary);});
+document.getElementById('backToOrders')?.addEventListener('click',()=>{closeOrderSummary();openOrders();});
+document.getElementById('continueAfterOrder')?.addEventListener('click',()=>{closeOrderSummary();document.getElementById('shop')?.scrollIntoView({behavior:'smooth'});});
