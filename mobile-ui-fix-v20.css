@@ -1,0 +1,89 @@
+/* v20 mobile UI fixes: full category image + fully scrollable checkout */
+@media (max-width: 640px) {
+  /* Keep the entire category image visible on mobile, matching desktop cards. */
+  .collection-carousel .category {
+    flex: 0 0 min(82vw, 300px) !important;
+    min-width: min(82vw, 300px) !important;
+    height: auto !important;
+  }
+
+  .collection-carousel .category > .category-image-wrap,
+  .collection-carousel .category .category-image-wrap {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1 !important;
+    overflow: hidden !important;
+    background: #f4ede4 !important;
+  }
+
+  .collection-carousel .category img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  .collection-carousel .category > .category-card-copy,
+  .collection-carousel .category .category-card-copy {
+    flex: 0 0 auto !important;
+    min-height: 82px !important;
+    padding: 12px 10px 14px !important;
+  }
+
+  /* Use the real mobile viewport and make the content area independently scrollable. */
+  .checkout-review-modal {
+    padding: 0 !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    overflow: hidden !important;
+  }
+
+  .checkout-review-card {
+    width: 100% !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    min-height: 0 !important;
+    border-radius: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  @supports not (height: 100dvh) {
+    .checkout-review-card {
+      height: 100vh !important;
+      max-height: 100vh !important;
+    }
+  }
+
+  .checkout-review-topbar {
+    flex: 0 0 auto !important;
+  }
+
+  .checkout-review-body {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: 10px 10px 24px !important;
+  }
+
+  .checkout-review-footer {
+    position: relative !important;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    z-index: 3 !important;
+    padding: 10px 14px max(14px, env(safe-area-inset-bottom)) !important;
+    background: #fff !important;
+    box-shadow: 0 -8px 20px rgba(43, 32, 26, .05);
+  }
+
+  .checkout-bill-card {
+    margin-bottom: 0 !important;
+  }
+}

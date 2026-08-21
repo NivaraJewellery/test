@@ -78,7 +78,14 @@ async function apiRequest(path, options = {}) {
       ...(options.headers || {})
     }
   });
-  const data = await response.json();
+  const contentType = response.headers.get('content-type') || '';
+  let data;
+  if (contentType.includes('application/json')) {
+    data = await response.json();
+  } else {
+    const text = await response.text();
+    throw new Error(`API returned ${response.status} ${response.statusText}${text ? `: ${text.slice(0, 120)}` : ''}`);
+  }
   if (!response.ok) throw new Error(data.error || 'Request failed');
   return data;
 }
@@ -239,3 +246,31 @@ if (!isAdminSessionExpired()) {
 } else {
   showLogin();
 }
+
+const reconcilePaymentForm = document.getElementById('reconcilePaymentForm');
+reconcilePaymentForm?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const orderId = document.getElementById('reconcileOrderId').value.trim();
+  const paymentId = document.getElementById('reconcilePaymentId').value.trim();
+  const button = reconcilePaymentForm.querySelector('button[type="submit"]');
+  if (!orderId || !paymentId) return showToast('Order ID and Payment ID are required');
+  if (!confirm('Verify this payment directly with Razorpay and reconcile the Nivara order?')) return;
+
+  const originalText = button.textContent;
+  button.disabled = true;
+  button.textContent = 'Verifying with Razorpay...';
+  try {
+    const data = await apiRequest('/api/admin-reconcile-payment', {
+      method: 'POST',
+      body: JSON.stringify({ razorpayOrderId: orderId, razorpayPaymentId: paymentId })
+    });
+    await loadReports();
+    showToast(data.message || 'Payment reconciled');
+    reconcilePaymentForm.reset();
+  } catch (error) {
+    showToast(error.message || 'Unable to reconcile payment');
+  } finally {
+    button.disabled = false;
+    button.textContent = originalText;
+  }
+});

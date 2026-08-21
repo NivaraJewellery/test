@@ -6,13 +6,15 @@ const handlers = {
   'admin-init': require('../lib/handlers/admin-init'),
   'admin-orders': require('../lib/handlers/admin-orders'),
   'admin-products': require('../lib/handlers/admin-products'),
+  'admin-reconcile-payment': require('../lib/handlers/admin-reconcile-payment'),
   'collections': require('../lib/handlers/collections'),
   'create-order': require('../lib/handlers/create-order'),
   'notify-requests': require('../lib/handlers/notify-requests'),
   'products': require('../lib/handlers/products'),
   'promo-release': require('../lib/handlers/promo-release'),
   'promo': require('../lib/handlers/promo'),
-  'verify-payment': require('../lib/handlers/verify-payment')
+  'verify-payment': require('../lib/handlers/verify-payment'),
+  'razorpay-webhook': require('../lib/handlers/razorpay-webhook')
 };
 
 function resolveRoute(req) {

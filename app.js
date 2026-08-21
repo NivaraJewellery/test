@@ -28,7 +28,7 @@ function setCheckoutTransitionLoading(isLoading, message = 'Loading your saved d
 }
 const LAUNCH_PROMO_CODE = 'NIVARA5';
 const LAUNCH_PROMO_PERCENT = 5;
-const LAUNCH_PROMO_START = Date.parse('2026-08-19T18:30:00.000Z'); // TEST: active from 20 Aug 2026, 12:00 AM IST
+const LAUNCH_PROMO_START = Date.parse('2026-08-21T11:30:00.000Z'); // 21 Aug 2026, 5:00 PM IST
 const LAUNCH_PROMO_END = Date.parse('2026-08-23T18:30:00.000Z');
 let appliedPromo = null;
 
@@ -162,8 +162,10 @@ function updateAnnouncementBar() {
   if (!bar) return;
   const state = getLaunchPromoState();
   bar.textContent = state === 'active'
-    ? `Launch offer: ${LAUNCH_PROMO_PERCENT}% OFF • Use code ${LAUNCH_PROMO_CODE} • Ends 23 Aug, 11:59 PM IST`
-    : 'Complimentary shipping on orders above ₹1,999';
+    ? `Launch offer: ${LAUNCH_PROMO_PERCENT}% OFF • Use code ${LAUNCH_PROMO_CODE} • Started 21 Aug, 5:00 PM IST • Ends 23 Aug, 11:59 PM IST`
+    : state === 'upcoming'
+      ? `Launch offer starts today at 5:00 PM IST • ${LAUNCH_PROMO_PERCENT}% OFF • Use code ${LAUNCH_PROMO_CODE} • Ends 23 Aug, 11:59 PM IST`
+      : 'Complimentary shipping on orders above ₹1,999';
   requestAnimationFrame(syncAnnouncementOffset);
 }
 

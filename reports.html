@@ -39,6 +39,16 @@
       <section class="report-grid" id="reportGrid"></section>
 
       <section class="product-form-wrap">
+        <h2>Reconcile captured Razorpay payment</h2>
+        <p class="muted-text">Use this only when Razorpay shows Captured but the Nivara order is still pending_payment. The server verifies the payment directly with Razorpay before updating stock and the order.</p>
+        <form id="reconcilePaymentForm" class="product-form">
+          <label>Razorpay Order ID<input id="reconcileOrderId" type="text" placeholder="order_..." required></label>
+          <label>Razorpay Payment ID<input id="reconcilePaymentId" type="text" placeholder="pay_..." required></label>
+          <button type="submit">Verify & reconcile payment</button>
+        </form>
+      </section>
+
+      <section class="product-form-wrap">
         <h2>Order report</h2>
         <p class="muted-text">Track open, in-progress, delivered orders and sales totals.</p>
         <div class="order-list" id="orderList"></div>

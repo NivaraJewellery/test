@@ -6,7 +6,7 @@
 - TEST BUILD START: 20 Aug 2026, 12:00 AM IST (enabled now)
 - Ends: 23 Aug 2026, 11:59 PM IST
 - TEST server-side UTC window: 2026-08-19T18:30:00Z through 2026-08-23T18:30:00Z (end is exclusive)
-- FINAL launch start to restore after testing: 21 Aug 2026, 4:00 PM IST / 2026-08-21T10:30:00Z
+- FINAL launch start to restore after testing: 21 Aug 2026, 5:00 PM IST / 2026-08-21T10:30:00Z
 
 ## Eligibility rules implemented
 1. Customer must be signed in.
@@ -30,7 +30,7 @@ Defaults are already built in. Only set these if you want to change the offer:
 - `PROMO_RESERVATION_MINUTES=30`
 
 ## Pre-launch testing
-This package is intentionally PROMO-ENABLED NOW for testing. Do not use this exact build for the final launch. After testing, restore the start to `2026-08-21T10:30:00.000Z` (21 Aug, 4:00 PM IST) in both `app.js` and the server environment/default.
+This package is intentionally PROMO-ENABLED NOW for testing. Do not use this exact build for the final launch. After testing, restore the start to `2026-08-21T10:30:00.000Z` (21 Aug, 5:00 PM IST) in both `app.js` and the server environment/default.
 
 If Vercel already has a `LAUNCH_PROMO_START` environment variable, it overrides the backend default. Set that Vercel variable to `2026-08-19T18:30:00.000Z` while testing, then restore it to `2026-08-21T10:30:00.000Z` before launch.
 

@@ -55,6 +55,14 @@
       "destination": "/api?route=verify-payment"
     },
     {
+      "source": "/api/admin-reconcile-payment",
+      "destination": "/api?route=admin-reconcile-payment"
+    },
+    {
+      "source": "/api/razorpay-webhook",
+      "destination": "/api?route=razorpay-webhook"
+    },
+    {
       "source": "/",
       "destination": "/index.html"
     },
