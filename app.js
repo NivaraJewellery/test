@@ -7,7 +7,6 @@ let pendingGuestDetails = null;
 let savedAddresses = [];
 let selectedAddressId = null;
 let addressModalMode = 'checkout';
-let pendingProfilePhone = '';
 let imageViewerZoom = 1;
 let imageViewerPan = { x: 0, y: 0 };
 let imageViewerDrag = null;
@@ -236,8 +235,8 @@ async function applyPromoCode() {
     showPromoMessage('Please sign in to your Nivara account before applying this promo code.');
     return;
   }
-  if (!customer.phoneVerified || !customer.phone) {
-    showPromoMessage('Please verify your registered mobile number before applying this promo code.');
+  if (customer.emailVerified === false) {
+    showPromoMessage('Please verify your email address before applying this promo code.');
     return;
   }
 
@@ -313,7 +312,7 @@ function renderCollections() {
       </span>
       <span class="category-card-copy">
         <b>${collection.name}</b>
-        <small>Explore Now <span aria-hidden="true">&rarr;</span></small>
+        <small>Explore Now &rarr;</small>
       </span>
     </a>
   `).join('');
@@ -653,11 +652,6 @@ function fillProfileForm(customerData) {
   form.elements.name.value = customerData.name || '';
   form.elements.email.value = customerData.email || '';
   form.elements.phone.value = customerData.phone || '';
-  const status = document.getElementById('profilePhoneStatus');
-  if (status) {
-    status.textContent = customerData.phoneVerified ? 'Verified mobile' : 'Mobile verification required';
-    status.classList.toggle('verified', Boolean(customerData.phoneVerified));
-  }
 }
 
 async function openProfile() {
@@ -757,17 +751,6 @@ function closeDeliveryAddress() {
   document.getElementById('addressForm').hidden = true;
 }
 
-function openPhoneVerify() {
-  const modal = document.getElementById('phoneVerifyModal');
-  const message = document.getElementById('phoneVerifyMessage');
-  if (message) message.textContent = `Enter the OTP to verify ${pendingProfilePhone || 'your new mobile number'}.`;
-  modal.hidden = false; modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
-  document.getElementById('phoneVerifyForm')?.elements.otp?.focus();
-}
-function closePhoneVerify() {
-  const modal = document.getElementById('phoneVerifyModal'); if (!modal) return;
-  modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); modal.hidden = true;
-}
 
 async function openOrders() {
   if (!customer) {
@@ -1091,7 +1074,6 @@ document.addEventListener('keydown', event => {
   closeCheckoutReview();
   closeGuestCheckout();
   closeDeliveryAddress();
-  closePhoneVerify();
   closeProfile();
   closeOrders();
   closeImageViewer();
@@ -1324,7 +1306,24 @@ async function startCheckout() {
   if (customer) {
     if (!customer.phoneVerified) return showToast('Your mobile number must be verified before checkout.');
     try { await loadSavedAddresses(); } catch (error) { return showToast(error.message); }
+
     closeCart();
+
+    // Keep checkout fast when there is no delivery choice to make.
+    // 0 addresses: ask the customer to add one.
+    // 1 address: use it automatically and go straight to checkout review.
+    // 2+ addresses: let the customer choose the delivery address.
+    if (savedAddresses.length === 0) {
+      await openDeliveryAddress('checkout');
+      return;
+    }
+
+    if (savedAddresses.length === 1) {
+      selectedAddressId = savedAddresses[0].id;
+      openCheckoutReview();
+      return;
+    }
+
     await openDeliveryAddress('checkout');
     return;
   }
@@ -1366,7 +1365,6 @@ document.getElementById('guestCheckoutForm').addEventListener('submit', event =>
 
 document.getElementById('manageAddressesButton')?.addEventListener('click', () => openDeliveryAddress('manage'));
 document.getElementById('deliveryAddressClose')?.addEventListener('click', closeDeliveryAddress);
-document.getElementById('phoneVerifyClose')?.addEventListener('click', closePhoneVerify);
 document.getElementById('addAddressButton')?.addEventListener('click', () => resetAddressForm());
 document.getElementById('cancelAddressEdit')?.addEventListener('click', () => { document.getElementById('addressForm').hidden = true; });
 document.getElementById('useSelectedAddress')?.addEventListener('click', () => {
@@ -1416,12 +1414,6 @@ document.getElementById('addressForm')?.addEventListener('submit', async event =
   } catch (error) { showToast(error.message); }
 });
 
-document.getElementById('resendProfileOtp')?.addEventListener('click', async () => {
-  try {
-    await accountRequest({ action:'resend-phone-otp', customer, phone: pendingProfilePhone });
-    showToast('OTP resent','success');
-  } catch (error) { showToast(error.message); }
-});
 
 document.getElementById('profileForm').addEventListener('submit', async event => {
   event.preventDefault();
@@ -1429,20 +1421,11 @@ document.getElementById('profileForm').addEventListener('submit', async event =>
   try {
     const data = await accountRequest({ action:'profile-update', customer, name:form.elements.name.value, phone:form.elements.phone.value });
     saveCustomer(data.customer);
-    if (data.otpRequired) {
-      pendingProfilePhone = data.pendingPhone || form.elements.phone.value.trim();
-      closeProfile(); openPhoneVerify(); showToast('OTP sent for the new mobile number','success');
-    } else { showToast('Profile updated','success'); closeProfile(); }
+    showToast('Profile updated','success');
+    closeProfile();
   } catch (error) { showToast(error.message); }
 });
 
-document.getElementById('phoneVerifyForm')?.addEventListener('submit', async event => {
-  event.preventDefault();
-  try {
-    const data = await accountRequest({ action:'verify-phone', customer, otp:event.currentTarget.elements.otp.value });
-    saveCustomer(data.customer); pendingProfilePhone=''; event.currentTarget.reset(); closePhoneVerify(); showToast('Mobile number verified','success');
-  } catch (error) { showToast(error.message); }
-});
 
 document.addEventListener('click', event => {
   if (event.target.closest('[data-change-delivery-address]')) { closeCheckoutReview(); openDeliveryAddress('checkout'); }

@@ -198,3 +198,40 @@
   width: 100%;
   box-sizing: border-box;
 }
+
+/* v12: neutralize legacy `.category span` rule from styles.css.
+   It was turning the inline arrow inside "Explore Now" into a huge absolutely-positioned overlay. */
+.collection-carousel .category .category-image-wrap,
+.collection-carousel .category .category-card-copy,
+.collection-carousel .category .category-card-copy small > span {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: auto;
+  height: auto;
+  transform: none !important;
+  opacity: 1 !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+  font-family: inherit !important;
+  color: inherit !important;
+}
+
+.collection-carousel .category .category-image-wrap {
+  display: block !important;
+  width: 100% !important;
+  height: 198px !important;
+  overflow: hidden !important;
+}
+
+.collection-carousel .category .category-card-copy {
+  display: flex !important;
+  width: 100% !important;
+  min-height: 74px !important;
+}
+
+.collection-carousel .category .category-card-copy small > span {
+  display: inline !important;
+}

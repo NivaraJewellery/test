@@ -2,7 +2,6 @@ const resetToken = new URLSearchParams(window.location.search).get('reset');
 const resetConfirmForm = document.getElementById('resetConfirmForm');
 const resetRequestForm = document.getElementById('resetRequestForm');
 let pendingSignupCustomer = null;
-let pendingSignupPhone = '';
 
 document.querySelectorAll('form').forEach(form => form.reset());
 
@@ -89,11 +88,10 @@ document.getElementById('signupForm').addEventListener('submit', async event => 
   try {
     const data = await accountRequest({ action: 'signup', ...values });
     pendingSignupCustomer = data.pendingCustomer;
-    pendingSignupPhone = values.phone;
     document.querySelectorAll('.auth-panel').forEach(panel => panel.classList.remove('active'));
     document.getElementById('signupOtpForm').hidden = false;
     document.getElementById('signupOtpForm').classList.add('active');
-    showToast('OTP sent. Please verify mobile.', 'success');
+    showToast('Verification code sent to your email.', 'success');
   } catch (error) {
     showToast(error.message);
   }
@@ -110,7 +108,6 @@ document.getElementById('signupOtpForm').addEventListener('submit', async event 
       otp: values.otp
     });
     pendingSignupCustomer = null;
-    pendingSignupPhone = '';
     saveCustomerAndGoHome(data.customer);
   } catch (error) {
     showToast(error.message);
@@ -120,11 +117,11 @@ document.getElementById('signupOtpForm').addEventListener('submit', async event 
 document.getElementById('resendSignupOtp').addEventListener('click', async () => {
   try {
     await accountRequest({
-      action: 'resend-phone-otp',
-      customer: pendingSignupCustomer,
-      phone: pendingSignupPhone
+      action: 'resend-email-otp',
+      customerId: pendingSignupCustomer?.id,
+      email: pendingSignupCustomer?.email
     });
-    showToast('OTP resent', 'success');
+    showToast('Verification code resent', 'success');
   } catch (error) {
     showToast(error.message);
   }
