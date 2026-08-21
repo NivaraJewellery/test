@@ -531,3 +531,50 @@ a {
     height: 230px;
   }
 }
+
+
+/* Category image management */
+.collection-card-with-image {
+  grid-template-columns: 76px minmax(0, 1fr) auto auto;
+}
+.collection-preview-wrap {
+  width: 68px;
+  height: 68px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #f7efe4;
+}
+.collection-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.collection-fields {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.collection-fields input {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: white;
+  color: var(--ink);
+  font: 14px "DM Sans", sans-serif;
+  padding: 11px;
+}
+@media (max-width: 760px) {
+  .collection-card-with-image {
+    grid-template-columns: 68px minmax(0, 1fr);
+  }
+  .collection-card-with-image > button {
+    width: 100%;
+  }
+  .collection-card-with-image > button:first-of-type {
+    grid-column: 1 / -1;
+  }
+  .collection-card-with-image > button:last-of-type {
+    grid-column: 1 / -1;
+  }
+}

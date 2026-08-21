@@ -126,9 +126,15 @@ function renderCollectionList() {
   if (!collectionList) return;
   const activeCollections = collections.filter(collection => collection.active);
   collectionList.innerHTML = activeCollections.length ? activeCollections.map(collection => `
-    <article class="collection-card">
-      <input value="${collection.name || ''}" data-collection-name="${collection.id}" aria-label="Collection name" />
-      <small>${collection.product_count || 0} products</small>
+    <article class="collection-card collection-card-with-image">
+      <div class="collection-preview-wrap">
+        <img class="collection-preview" src="${collection.image || 'assets/logo.png'}" alt="${collection.name || 'Collection'} category preview" />
+      </div>
+      <div class="collection-fields">
+        <input value="${collection.name || ''}" data-collection-name="${collection.id}" aria-label="Collection name" />
+        <input value="${collection.image || ''}" data-collection-image="${collection.id}" aria-label="Category image path" placeholder="assets/categories/category-image.jpg" />
+        <small>${collection.product_count || 0} products • Leave image blank to use a product image automatically.</small>
+      </div>
       <button type="button" data-save-collection="${collection.id}">Save collection</button>
       <button type="button" data-delete-collection="${collection.id}" ${Number(collection.product_count || 0) > 0 ? 'disabled title="Remove mapped products first"' : ''}>Delete</button>
     </article>
@@ -409,11 +415,12 @@ document.addEventListener('click', async event => {
     if (saveCollectionButton) {
       const id = Number(saveCollectionButton.dataset.saveCollection);
       const name = document.querySelector(`[data-collection-name="${id}"]`).value.trim();
+      const image = document.querySelector(`[data-collection-image="${id}"]`)?.value.trim() || '';
       const icon = '◇';
       if (!name) return showToast('Collection name is required');
       await apiRequest('/api/admin-collections', {
         method: 'PATCH',
-        body: JSON.stringify({ id, name, icon })
+        body: JSON.stringify({ id, name, image, icon })
       });
       await loadProducts();
       showToast('Collection updated');
