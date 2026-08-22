@@ -72,8 +72,10 @@ function ensureActiveCustomerSession() {
     refreshCustomerSession();
     return true;
   }
-  clearCart();
-  clearCustomerSession('Session expired. Please login again.');
+
+  // Preserve the bag when authentication expires. The customer can sign in again
+  // and resume checkout with the same cart.
+  clearCustomerSession('Session expired. Please login again. Your bag has been kept.');
   return false;
 }
 
@@ -1243,6 +1245,7 @@ async function proceedToPayment() {
             }
           }
 
+          if (customer) refreshCustomerSession();
           showToast('Payment cancelled. Your bag has been kept.');
         }
       }
@@ -1338,6 +1341,10 @@ async function applyCheckoutPromo() {
 
 async function startCheckout() {
   if (!cart.length) return showToast('Your bag is empty');
+
+  // A checkout attempt is active customer activity, so extend the session before
+  // creating the Razorpay order.
+  if (customer) refreshCustomerSession();
 
   if (!customer) {
     localStorage.setItem('nivara-return-to-checkout', '1');
