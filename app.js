@@ -1211,14 +1211,38 @@ async function proceedToPayment() {
         }
       },
       modal: {
-        ondismiss() {
+        async ondismiss() {
           if (orderData.orderId) {
-            fetch('/api/cancel-order', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ orderId: orderData.orderId })
-            }).catch(() => {});
+            try {
+              const cancelResponse = await fetch('/api/cancel-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: orderData.orderId }),
+                keepalive: true
+              });
+
+              // If order cancellation itself cannot update the pending order for any
+              // reason, still release the promo reservation explicitly.
+              if (!cancelResponse.ok) {
+                await fetch('/api/promo-release', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ orderId: orderData.orderId }),
+                  keepalive: true
+                });
+              }
+            } catch (_) {
+              try {
+                await fetch('/api/promo-release', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ orderId: orderData.orderId }),
+                  keepalive: true
+                });
+              } catch (_) {}
+            }
           }
+
           showToast('Payment cancelled. Your bag has been kept.');
         }
       }
