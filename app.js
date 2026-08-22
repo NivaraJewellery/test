@@ -1245,6 +1245,12 @@ async function proceedToPayment() {
             }
           }
 
+          // The backend reservation is now released, so clear the matching
+          // in-memory promo state as well. Otherwise the next click on "Apply"
+          // is interpreted as "Remove" by applyPromoCode() and no /api/promo
+          // request is sent.
+          resetAppliedPromo('Payment cancelled. You can apply the promo again.');
+          renderCart();
           if (customer) refreshCustomerSession();
           showToast('Payment cancelled. Your bag has been kept.');
         }
