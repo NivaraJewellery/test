@@ -174,6 +174,15 @@ function calculatePromoDiscount(subtotal) {
   return Math.round((Number(subtotal) * Number(appliedPromo.percent || LAUNCH_PROMO_PERCENT)) / 100);
 }
 
+const FREE_SHIPPING_THRESHOLD = 1999;
+const STANDARD_SHIPPING_CHARGE = 99;
+
+function calculateShippingCharge(subtotal) {
+  const value = Number(subtotal || 0);
+  if (value <= 0) return 0;
+  return value >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING_CHARGE;
+}
+
 function updateFilterScrollButtons() {
   const node = document.getElementById('productFilters');
   const previousButton = document.getElementById('filterPrev');
@@ -399,7 +408,8 @@ function renderCart() {
   const count = cart.reduce((total, item) => total + item.quantity, 0);
   const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
   const discount = calculatePromoDiscount(subtotal);
-  const total = Math.max(0, subtotal - discount);
+  const shipping = calculateShippingCharge(subtotal);
+  const total = Math.max(0, subtotal - discount + shipping);
   document.getElementById('cartCount').textContent = count;
   document.getElementById('cartTitleCount').textContent = `(${count})`;
   document.getElementById('cartSubtotal').textContent = formatPrice(subtotal);
@@ -431,8 +441,12 @@ function renderCart() {
   const discountNode = document.getElementById('promoDiscount');
   const discountLabel = document.getElementById('promoDiscountLabel');
   const grandTotalNode = document.getElementById('cartGrandTotal');
+  const shippingRow = document.getElementById('cartShippingRow');
+  const shippingNode = document.getElementById('cartShipping');
   if (discountRow) discountRow.hidden = !appliedPromo;
-  if (grandTotalRow) grandTotalRow.hidden = !appliedPromo;
+  if (shippingRow) shippingRow.hidden = !cart.length;
+  if (shippingNode) shippingNode.textContent = shipping === 0 && cart.length ? 'FREE' : formatPrice(shipping);
+  if (grandTotalRow) grandTotalRow.hidden = !cart.length;
   if (discountNode) discountNode.textContent = `- ${formatPrice(discount)}`;
   if (discountLabel) {
     const percent = Number(appliedPromo?.percent || LAUNCH_PROMO_PERCENT);
@@ -845,15 +859,20 @@ function orderSummaryMarkup(order) {
   const customerDetails = order.customer || details.customer || {};
   const promo = order.promo || (typeof order.items === 'string' ? JSON.parse(order.items)?.promo : order.items?.promo) || null;
   const subtotal = Number(order.subtotal != null ? order.subtotal : (promo?.subtotal != null ? promo.subtotal : products.reduce((sum,item)=>sum+Number(item.price||0)*Number(item.quantity||1),0)));
-  const amount = Number(order.amount || promo?.total || subtotal);
-  const discount = Number(promo?.discount || Math.max(0, subtotal-amount));
+  const shipping = Number(
+    order.shippingCharge ?? order.shipping_charge ??
+    (typeof order.items === 'string' ? JSON.parse(order.items)?.shipping?.charge : order.items?.shipping?.charge) ??
+    0
+  );
+  const amount = Number(order.amount || ((promo?.total != null ? Number(promo.total) : subtotal) + shipping));
+  const discount = Number(promo?.discount || Math.max(0, subtotal + shipping - amount));
   const dateValue = order.createdAt || order.created_at || new Date().toISOString();
   const address = customerDetails.shippingAddress || customerDetails.billingAddress || [customerDetails.address?.line1,customerDetails.address?.line2,customerDetails.address?.city,customerDetails.address?.state,customerDetails.address?.pincode].filter(Boolean).join(', ') || 'Not available';
   return `<div class="order-summary-success">✓ Payment successful — your order is confirmed.</div>
     <div class="order-summary-meta"><div><small>Order number</small><br><strong>${order.orderId || order.razorpay_order_id || '-'}</strong></div><div><small>Order date</small><br><strong>${new Date(dateValue).toLocaleString('en-IN')}</strong></div><div><small>Payment reference</small><br><strong>${order.paymentId || order.razorpay_payment_id || '-'}</strong></div><div><small>Status</small><br><strong>Confirmed</strong></div></div>
     <h3>Items ordered</h3><div class="order-summary-items">${products.map(item=>`<div class="order-summary-item">${item.image?`<img src="${item.image}" alt="">`:'<span></span>'}<div><strong>${item.name || `Product ${item.id}`}</strong><small>Qty ${item.quantity || 1} × ${formatPrice(item.price || 0)}</small></div><strong>${formatPrice(Number(item.price||0)*Number(item.quantity||1))}</strong></div>`).join('')}</div>
     <div class="order-summary-customer"><strong>Delivery details</strong><p>${customerDetails.name || ''}${customerDetails.phone ? ` · ${customerDetails.phone}`:''}<br>${address}</p></div>
-    <div class="order-summary-totals"><div class="order-summary-total-row"><span>Subtotal</span><strong>${formatPrice(subtotal)}</strong></div>${discount>0?`<div class="order-summary-total-row"><span>Promo discount${promo?.percent?` (${promo.percent}%)`:''}</span><strong>- ${formatPrice(discount)}</strong></div>`:''}<div class="order-summary-total-row grand"><span>Total paid</span><strong>${formatPrice(amount)}</strong></div></div>`;
+    <div class="order-summary-totals"><div class="order-summary-total-row"><span>Subtotal</span><strong>${formatPrice(subtotal)}</strong></div>${discount>0?`<div class="order-summary-total-row"><span>Promo discount${promo?.percent?` (${promo.percent}%)`:''}</span><strong>- ${formatPrice(discount)}</strong></div>`:''}<div class="order-summary-total-row"><span>Shipping</span><strong>${shipping === 0 ? 'FREE' : formatPrice(shipping)}</strong></div><div class="order-summary-total-row grand"><span>Total paid</span><strong>${formatPrice(amount)}</strong></div></div>`;
 }
 
 function showOrderSummary(order, confirmed = false) {
@@ -867,7 +886,8 @@ function showOrderSummary(order, confirmed = false) {
 function closeOrderSummary(){const modal=document.getElementById('orderSummaryModal');modal.classList.remove('open');modal.setAttribute('aria-hidden','true');modal.hidden=true;}
 function downloadOrderSummaryText(order){
   const products=order.products || normalizeOrderDetails(order).products || []; const promo=order.promo || null;
-  const lines=['NIVARA JEWELLERY','ORDER SUMMARY','',`Order: ${order.orderId||order.razorpay_order_id||'-'}`,`Payment: ${order.paymentId||order.razorpay_payment_id||'-'}`,`Date: ${new Date(order.createdAt||order.created_at||Date.now()).toLocaleString('en-IN')}`,'','Items:',...products.map(i=>`${i.name} | Qty ${i.quantity||1} | Rs. ${Number(i.price||0)*Number(i.quantity||1)}`),'',promo?.discount?`Promo discount (${promo.percent||0}%): - Rs. ${promo.discount}`:'',`Total paid: Rs. ${order.amount||promo?.total||0}`].filter(v=>v!==undefined);
+  const shipping=Number(order.shippingCharge??order.shipping_charge??(typeof order.items==='string'?JSON.parse(order.items)?.shipping?.charge:order.items?.shipping?.charge)??0);
+  const lines=['NIVARA JEWELLERY','ORDER SUMMARY','',`Order: ${order.orderId||order.razorpay_order_id||'-'}`,`Payment: ${order.paymentId||order.razorpay_payment_id||'-'}`,`Date: ${new Date(order.createdAt||order.created_at||Date.now()).toLocaleString('en-IN')}`,'','Items:',...products.map(i=>`${i.name} | Qty ${i.quantity||1} | Rs. ${Number(i.price||0)*Number(i.quantity||1)}`),'',promo?.discount?`Promo discount (${promo.percent||0}%): - Rs. ${promo.discount}`:'',`Shipping: ${shipping===0?'FREE':'Rs. '+shipping}`,`Total paid: Rs. ${order.amount||((promo?.total||0)+shipping)||0}`].filter(v=>v!==undefined);
   const esc=t=>String(t).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)').replace(/[^\x20-\x7E]/g,' ');
   let y=790, content='BT /F1 11 Tf 50 810 Td ';
   lines.forEach((line,i)=>{if(i) content+=' 0 -18 Td '; content+=`(${esc(line)}) Tj`;}); content+=' ET';
@@ -1222,9 +1242,12 @@ function renderCheckoutReview() {
   const count = cart.reduce((total, item) => total + item.quantity, 0);
   const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
   const discount = calculatePromoDiscount(subtotal);
-  const total = Math.max(0, subtotal - discount);
+  const shipping = calculateShippingCharge(subtotal);
+  const total = Math.max(0, subtotal - discount + shipping);
   document.getElementById('checkoutItemCount').textContent = `${count} ${count === 1 ? 'item' : 'items'}`;
   document.getElementById('checkoutReviewSubtotal').textContent = formatPrice(subtotal);
+  const shippingValue = document.getElementById('checkoutReviewShipping');
+  if (shippingValue) shippingValue.textContent = shipping === 0 ? 'FREE' : formatPrice(shipping);
   document.getElementById('checkoutReviewTotal').textContent = formatPrice(total);
   document.getElementById('checkoutPayableTotal').textContent = formatPrice(total);
   const original = document.getElementById('checkoutOriginalTotal');

@@ -130,7 +130,7 @@ function renderOrders() {
       <article class="admin-order-card">
         <div>
           <h3>${order.orderNumber || 'Order'}</h3>
-          <p>${new Date(order.createdAt).toLocaleString('en-IN')} - ${formatPrice(order.amount)} - ${order.paymentId || 'Payment pending'}</p>
+          <p>${new Date(order.createdAt).toLocaleString('en-IN')} - ${formatPrice(order.amount)} - Shipping ${Number(order.shippingCharge || 0) === 0 ? 'FREE' : formatPrice(order.shippingCharge)} - ${order.paymentId || 'Payment pending'}</p>
           <p><strong>${customer.name || order.customerEmail || 'Customer'}</strong> - ${customer.phone || 'No phone'} - ${order.customerEmail || customer.email || 'No email'}</p>
           <p>${address}</p>
           <ul>${products.map(item => `<li>${item.name || `Product ${item.id}`} x ${item.quantity}</li>`).join('')}</ul>
