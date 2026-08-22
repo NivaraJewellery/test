@@ -1457,7 +1457,9 @@ document.addEventListener('click', event => {
 document.addEventListener('click', refreshCustomerSession);
 document.addEventListener('keydown', refreshCustomerSession);
 if (isCustomerSessionExpired()) {
-  clearCart();
+  // Expired authentication must never destroy the customer's shopping bag.
+  // Keep the cart in memory/localStorage so the customer can sign in again
+  // and resume checkout.
   clearCustomerSession();
 }
 async function initializeStorefront() {
