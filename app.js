@@ -445,7 +445,7 @@ function renderCart() {
   const grandTotalNode = document.getElementById('cartGrandTotal');
   const shippingRow = document.getElementById('cartShippingRow');
   const shippingNode = document.getElementById('cartShipping');
-  if (discountRow) discountRow.hidden = !appliedPromo || discount <= 0;
+  if (discountRow) discountRow.hidden = !appliedPromo;
   if (shippingRow) shippingRow.hidden = !cart.length;
   if (shippingNode) shippingNode.textContent = shipping === 0 && cart.length ? 'FREE' : formatPrice(shipping);
   if (grandTotalRow) grandTotalRow.hidden = !cart.length;
