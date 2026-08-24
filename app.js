@@ -29,7 +29,7 @@ function setCheckoutTransitionLoading(isLoading, message = 'Loading your saved d
 const LAUNCH_PROMO_CODE = 'NIVARA5';
 const LAUNCH_PROMO_PERCENT = 5;
 const LAUNCH_PROMO_START = Date.parse('2026-08-21T11:30:00.000Z'); // 21 Aug 2026, 5:00 PM IST
-const LAUNCH_PROMO_END = Date.parse('2026-08-25T18:30:00.000Z');
+const LAUNCH_PROMO_END = Date.parse('2026-08-23T18:30:00.000Z');
 let appliedPromo = null;
 
 const formatPrice = value => `Rs. ${Number(value).toLocaleString('en-IN')}`;
@@ -162,12 +162,7 @@ function syncAnnouncementOffset() {
 function updateAnnouncementBar() {
   const bar = document.getElementById('announcementBar');
   if (!bar) return;
-  const state = getLaunchPromoState();
-  bar.textContent = state === 'active'
-    ? `Launch offer: ${LAUNCH_PROMO_PERCENT}% OFF • Use code ${LAUNCH_PROMO_CODE} • Started 21 Aug, 5:00 PM IST • Ends 23 Aug, 11:59 PM IST`
-    : state === 'upcoming'
-      ? `Launch offer starts today at 5:00 PM IST • ${LAUNCH_PROMO_PERCENT}% OFF • Use code ${LAUNCH_PROMO_CODE} • Ends 23 Aug, 11:59 PM IST`
-      : 'Complimentary shipping on orders above ₹1,999';
+  bar.textContent = 'Free shipping on orders above ₹1,999';
   requestAnimationFrame(syncAnnouncementOffset);
 }
 
@@ -874,7 +869,7 @@ function orderSummaryMarkup(order) {
     <div class="order-summary-meta"><div><small>Order number</small><br><strong>${order.orderId || order.razorpay_order_id || '-'}</strong></div><div><small>Order date</small><br><strong>${new Date(dateValue).toLocaleString('en-IN')}</strong></div><div><small>Payment reference</small><br><strong>${order.paymentId || order.razorpay_payment_id || '-'}</strong></div><div><small>Status</small><br><strong>Confirmed</strong></div></div>
     <h3>Items ordered</h3><div class="order-summary-items">${products.map(item=>`<div class="order-summary-item">${item.image?`<img src="${item.image}" alt="">`:'<span></span>'}<div><strong>${item.name || `Product ${item.id}`}</strong><small>Qty ${item.quantity || 1} × ${formatPrice(item.price || 0)}</small></div><strong>${formatPrice(Number(item.price||0)*Number(item.quantity||1))}</strong></div>`).join('')}</div>
     <div class="order-summary-customer"><strong>Delivery details</strong><p>${customerDetails.name || ''}${customerDetails.phone ? ` · ${customerDetails.phone}`:''}<br>${address}</p></div>
-    <div class="order-summary-totals"><div class="order-summary-total-row"><span>Subtotal</span><strong>${formatPrice(subtotal)}</strong></div>${discount>0?`<div class="order-summary-total-row"><span>Promo discount${promo?.percent?` (${promo.percent}%)`:''}</span><strong>- ${formatPrice(discount)}</strong></div>`:''}<div class="order-summary-total-row"><span>Standard shipping charge</span><strong>${shipping === 0 ? 'FREE' : formatPrice(shipping)}</strong></div><div class="order-summary-total-row grand"><span>Total paid</span><strong>${formatPrice(amount)}</strong></div></div>`;
+    <div class="order-summary-totals"><div class="order-summary-total-row"><span>Subtotal</span><strong>${formatPrice(subtotal)}</strong></div>${discount>0?`<div class="order-summary-total-row"><span>Promo discount${promo?.percent?` (${promo.percent}%)`:''}</span><strong>- ${formatPrice(discount)}</strong></div>`:''}<div class="order-summary-total-row"><span>Shipping</span><strong>${shipping === 0 ? 'FREE' : formatPrice(shipping)}</strong></div><div class="order-summary-total-row grand"><span>Total paid</span><strong>${formatPrice(amount)}</strong></div></div>`;
 }
 
 function showOrderSummary(order, confirmed = false) {
@@ -889,7 +884,7 @@ function closeOrderSummary(){const modal=document.getElementById('orderSummaryMo
 function downloadOrderSummaryText(order){
   const products=order.products || normalizeOrderDetails(order).products || []; const promo=order.promo || null;
   const shipping=Number(order.shippingCharge??order.shipping_charge??(typeof order.items==='string'?JSON.parse(order.items)?.shipping?.charge:order.items?.shipping?.charge)??0);
-  const lines=['NIVARA JEWELLERY','ORDER SUMMARY','',`Order: ${order.orderId||order.razorpay_order_id||'-'}`,`Payment: ${order.paymentId||order.razorpay_payment_id||'-'}`,`Date: ${new Date(order.createdAt||order.created_at||Date.now()).toLocaleString('en-IN')}`,'','Items:',...products.map(i=>`${i.name} | Qty ${i.quantity||1} | Rs. ${Number(i.price||0)*Number(i.quantity||1)}`),'',promo?.discount?`Promo discount (${promo.percent||0}%): - Rs. ${promo.discount}`:'',`Standard shipping charge: ${shipping===0?'FREE':'Rs. '+shipping}`,`Total paid: Rs. ${order.amount||((promo?.total||0)+shipping)||0}`].filter(v=>v!==undefined);
+  const lines=['NIVARA JEWELLERY','ORDER SUMMARY','',`Order: ${order.orderId||order.razorpay_order_id||'-'}`,`Payment: ${order.paymentId||order.razorpay_payment_id||'-'}`,`Date: ${new Date(order.createdAt||order.created_at||Date.now()).toLocaleString('en-IN')}`,'','Items:',...products.map(i=>`${i.name} | Qty ${i.quantity||1} | Rs. ${Number(i.price||0)*Number(i.quantity||1)}`),'',promo?.discount?`Promo discount (${promo.percent||0}%): - Rs. ${promo.discount}`:'',`Shipping: ${shipping===0?'FREE':'Rs. '+shipping}`,`Total paid: Rs. ${order.amount||((promo?.total||0)+shipping)||0}`].filter(v=>v!==undefined);
   const esc=t=>String(t).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)').replace(/[^\x20-\x7E]/g,' ');
   let y=790, content='BT /F1 11 Tf 50 810 Td ';
   lines.forEach((line,i)=>{if(i) content+=' 0 -18 Td '; content+=`(${esc(line)}) Tj`;}); content+=' ET';
@@ -1288,11 +1283,7 @@ function renderCheckoutReview() {
   const discountRow = document.getElementById('checkoutReviewDiscountRow');
   const discountLabel = document.getElementById('checkoutReviewDiscountLabel');
   const discountValue = document.getElementById('checkoutReviewDiscount');
-  if (discountRow) {
-    const showDiscount = Boolean(appliedPromo) && discount > 0;
-    discountRow.hidden = !showDiscount;
-    discountRow.style.display = showDiscount ? 'flex' : 'none';
-  }
+  if (discountRow) discountRow.hidden = !appliedPromo || discount <= 0;
   if (discountLabel) discountLabel.textContent = `Promo discount (${Number(appliedPromo?.percent || LAUNCH_PROMO_PERCENT)}%)`;
   if (discountValue) discountValue.textContent = `- ${formatPrice(discount)}`;
   const items = document.getElementById('checkoutReviewItems');
