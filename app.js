@@ -29,7 +29,7 @@ function setCheckoutTransitionLoading(isLoading, message = 'Loading your saved d
 const LAUNCH_PROMO_CODE = 'NIVARA5';
 const LAUNCH_PROMO_PERCENT = 5;
 const LAUNCH_PROMO_START = Date.parse('2026-08-21T11:30:00.000Z'); // 21 Aug 2026, 5:00 PM IST
-const LAUNCH_PROMO_END = Date.parse('2026-08-23T18:30:00.000Z');
+const LAUNCH_PROMO_END = Date.parse('2026-08-25T18:30:00.000Z');
 let appliedPromo = null;
 
 const formatPrice = value => `Rs. ${Number(value).toLocaleString('en-IN')}`;
