@@ -4,13 +4,15 @@
 }
 
 .product-image {
-  aspect-ratio: auto;
-  height: 250px;
-  min-height: 0;
-  display: grid;
-  place-items: center;
+  aspect-ratio: 1 / 1 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  display: grid !important;
+  place-items: center !important;
   position: relative;
   overflow: hidden;
+  background: #fffaf2 !important;
+  border-radius: 16px;
 }
 
 .product-image::before {
@@ -18,12 +20,16 @@
 }
 
 .product-photo-button {
-  width: 100%;
-  height: 100%;
-  padding: 0;
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
   border: 0;
   background: transparent;
   cursor: zoom-in;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden;
 }
 
 .category img {
@@ -50,12 +56,19 @@
 }
 
 .product-photo {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center center;
-  padding: 0;
-  margin: auto;
+  width: auto !important;
+  height: auto !important;
+  max-width: 94% !important;
+  max-height: 94% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  padding: 0 !important;
+  margin: auto !important;
+  display: block;
+  position: relative;
+  z-index: 1;
+  mix-blend-mode: multiply;
+  border-radius: 14px;
 }
 
 .product-tag {
@@ -454,20 +467,15 @@
   background: #f2e2c7;
 }
 
-@media(max-width:760px){
+@media (max-width: 760px) {
   .product-image {
-    height: 160px;
-    min-height: 0;
+    min-height: 190px;
     border-radius: 14px;
   }
 
   .product-photo {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    object-position: center center;
-    padding: 0;
-    margin: auto;
+    padding: 8px;
+    border-radius: 12px;
   }
 
   .image-viewer-controls {
@@ -500,5 +508,24 @@
   .product-info .price {
     display: block;
     margin-top: 10px;
+  }
+}
+
+
+/* v32 product-image fix: keep the complete product visible */
+@media (max-width: 760px) {
+  .product-image {
+    aspect-ratio: 1 / 1 !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .product-photo {
+    width: auto !important;
+    height: auto !important;
+    max-width: 92% !important;
+    max-height: 92% !important;
+    object-fit: contain !important;
+    object-position: center center !important;
   }
 }
