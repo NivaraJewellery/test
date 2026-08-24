@@ -1288,7 +1288,11 @@ function renderCheckoutReview() {
   const discountRow = document.getElementById('checkoutReviewDiscountRow');
   const discountLabel = document.getElementById('checkoutReviewDiscountLabel');
   const discountValue = document.getElementById('checkoutReviewDiscount');
-  if (discountRow) discountRow.hidden = !appliedPromo || discount <= 0;
+  if (discountRow) {
+    const showDiscount = Boolean(appliedPromo) && discount > 0;
+    discountRow.hidden = !showDiscount;
+    discountRow.style.display = showDiscount ? 'flex' : 'none';
+  }
   if (discountLabel) discountLabel.textContent = `Promo discount (${Number(appliedPromo?.percent || LAUNCH_PROMO_PERCENT)}%)`;
   if (discountValue) discountValue.textContent = `- ${formatPrice(discount)}`;
   const items = document.getElementById('checkoutReviewItems');
