@@ -158,12 +158,16 @@ function isMissingDatabaseTable(error) {
     error.message.toLowerCase().includes('relation "orders" does not exist');
 }
 
+function isBangleProduct(product) {
+  const text = `${product?.category || ''} ${product?.type || ''} ${product?.collection_name || ''}`.toLowerCase();
+  return text.includes('bangle');
+}
 function variantRowsHtml(product) {
   const rows = Array.isArray(product.variants) ? product.variants : [];
   return rows.map(v => `<div class="variant-row" data-variant-row>
-    <input data-variant-size value="${v.size || ''}" placeholder="Size e.g. 2.4" />
-    <select data-variant-uom><option ${v.uom==='CM'?'selected':''}>CM</option><option ${v.uom==='Inch'?'selected':''}>Inch</option><option ${v.uom==='MM'?'selected':''}>MM</option></select>
-    <input data-variant-stock type="number" min="0" value="${Number(v.stock||0)}" placeholder="Stock" />
+    <input data-variant-size value="${v.size || ''}" placeholder="Size e.g. 2.4" required />
+    <select data-variant-uom required><option value="">UOM</option><option ${v.uom==='CM'?'selected':''}>CM</option><option ${v.uom==='Inch'?'selected':''}>Inch</option><option ${v.uom==='MM'?'selected':''}>MM</option></select>
+    <input data-variant-stock type="number" min="0" step="1" value="${Number(v.stock||0)}" placeholder="Quantity" required />
     <button type="button" data-remove-variant-row>Remove</button>
   </div>`).join('');
 }
@@ -171,10 +175,28 @@ function readVariantRows(container) {
   return [...container.querySelectorAll('[data-variant-row]')].map(row => ({
     size: row.querySelector('[data-variant-size]').value.trim(),
     uom: row.querySelector('[data-variant-uom]').value,
-    stock: Number(row.querySelector('[data-variant-stock]').value) || 0
-  })).filter(v => v.size);
+    stockRaw: row.querySelector('[data-variant-stock]').value.trim(),
+    stock: Number(row.querySelector('[data-variant-stock]').value)
+  }));
 }
-function newVariantRowHtml(){ return `<div class="variant-row" data-variant-row><input data-variant-size placeholder="Size e.g. 2.4"/><select data-variant-uom><option>CM</option><option>Inch</option><option>MM</option></select><input data-variant-stock type="number" min="0" value="0" placeholder="Stock"/><button type="button" data-remove-variant-row>Remove</button></div>`; }
+function validateBangleVariants(product, variants, declaredStock) {
+  if (!isBangleProduct(product)) return variants.map(({stockRaw, ...v}) => v);
+  if (!variants.length) throw new Error('Bangle products require at least one Size / UOM / Quantity row.');
+  const seen = new Set();
+  for (const v of variants) {
+    if (!v.size) throw new Error('Size is mandatory for every bangle UOM row.');
+    if (!['CM','Inch','MM'].includes(v.uom)) throw new Error('UOM is mandatory for every bangle row. Select CM, Inch or MM.');
+    if (v.stockRaw === '' || !Number.isInteger(v.stock) || v.stock < 0) throw new Error('Quantity is mandatory and must be a whole number 0 or above for every bangle row.');
+    const key = `${v.size}|${v.uom}`.toLowerCase();
+    if (seen.has(key)) throw new Error(`Duplicate bangle size ${v.size} ${v.uom}.`);
+    seen.add(key);
+  }
+  const total = variants.reduce((sum, v) => sum + v.stock, 0);
+  if (!Number.isInteger(Number(declaredStock)) || Number(declaredStock) < 0) throw new Error('Stock quantity must be a whole number 0 or above.');
+  if (total !== Number(declaredStock)) throw new Error(`Stock quantity (${declaredStock}) must equal the total UOM breakup (${total}).`);
+  return variants.map(({stockRaw, ...v}) => v);
+}
+function newVariantRowHtml(){ return `<div class="variant-row" data-variant-row><input data-variant-size placeholder="Size e.g. 2.4" required/><select data-variant-uom required><option value="">UOM</option><option>CM</option><option>Inch</option><option>MM</option></select><input data-variant-stock type="number" min="0" step="1" placeholder="Quantity" required/><button type="button" data-remove-variant-row>Remove</button></div>`; }
 
 function renderStockList() {
   stockList.innerHTML = products.map(product => `
@@ -206,9 +228,9 @@ function renderStockList() {
         <label class="image-path-field">Category
           <input value="${product.category || ''}" data-category-input="${product.id}" placeholder="Necklace" />
         </label>
-        <div class="variant-admin-box" data-variant-box="${product.id}"><strong>Size variants</strong><small>Optional. UOM can be CM, Inch or MM.</small><div data-variant-list="${product.id}">${variantRowsHtml(product)}</div><button type="button" data-add-variant-row="${product.id}">+ Add size</button><button type="button" data-save-variants="${product.id}">Save sizes</button></div>
+        <div class="variant-admin-box" data-variant-box="${product.id}"><strong>Size / UOM breakup</strong><small>Mandatory for Bangle collections. Size, UOM and Quantity are required. Total breakup must match Stock.</small><div data-variant-list="${product.id}">${variantRowsHtml(product)}</div><button type="button" data-add-variant-row="${product.id}">+ Add size</button><button type="button" data-save-variants="${product.id}">Save sizes</button></div>
         <div class="stock-number">
-          <input type="number" min="0" value="${product.stock}" data-stock-input="${product.id}" ${(product.variants||[]).length?'disabled title="Stock is calculated from size variants"':''} />
+          <input type="number" min="0" value="${product.stock}" data-stock-input="${product.id}" />
           <span>${product.stock ? `${product.stock} available` : 'Out of stock'}</span>
         </div>
         <div class="stock-controls">
@@ -303,7 +325,6 @@ document.getElementById('productForm').addEventListener('submit', async event =>
   const formData = new FormData(form);
   const product = Object.fromEntries(formData.entries());
   product.variants = readVariantRows(document.getElementById('newProductVariants'));
-  if (product.variants.length) product.stock = product.variants.reduce((sum,v)=>sum+v.stock,0);
   const selectedCollection = collections.find(collection => collection.id === Number(product.collection_id));
   if (selectedCollection) {
     product.category = selectedCollection.name;
@@ -311,6 +332,7 @@ document.getElementById('productForm').addEventListener('submit', async event =>
   }
 
   try {
+    product.variants = validateBangleVariants(product, product.variants, product.stock);
     await apiRequest('/api/admin-products', {
       method: 'POST',
       body: JSON.stringify(product)
@@ -441,7 +463,7 @@ document.addEventListener('click', async event => {
   if (removeVariantButton) { removeVariantButton.closest('[data-variant-row]')?.remove(); return; }
   if (addVariantButton) { document.querySelector(`[data-variant-list="${addVariantButton.dataset.addVariantRow}"]`).insertAdjacentHTML('beforeend', newVariantRowHtml()); return; }
   try {
-    if (saveVariantsButton) { const id=Number(saveVariantsButton.dataset.saveVariants); const box=document.querySelector(`[data-variant-list="${id}"]`); const variants=readVariantRows(box); await apiRequest('/api/admin-products',{method:'PATCH',body:JSON.stringify({id,variants})}); await loadProducts(); showToast('Size variants updated'); return; }
+    if (saveVariantsButton) { const id=Number(saveVariantsButton.dataset.saveVariants); const product=products.find(p=>Number(p.id)===id); const box=document.querySelector(`[data-variant-list="${id}"]`); const stockInput=document.querySelector(`[data-stock-input="${id}"]`); const variants=validateBangleVariants(product, readVariantRows(box), stockInput?.value); await apiRequest('/api/admin-products',{method:'PATCH',body:JSON.stringify({id,stock:Number(stockInput?.value),variants})}); await loadProducts(); showToast('Size / UOM breakup updated'); return; }
     if (saveCollectionButton) {
       const id = Number(saveCollectionButton.dataset.saveCollection);
       const name = document.querySelector(`[data-collection-name="${id}"]`).value.trim();

@@ -117,16 +117,54 @@ async function loadProducts() {
     collections = buildFallbackCollections(products);
   }
 
+  const removedCartItems = [];
   cart = cart
     .map(item => {
-      const product = products.find(entry => entry.id === item.id);
-      if (!product) return null; const variant=(product.variants||[]).find(v=>Number(v.id)===Number(item.variantId)); const available=variant?Number(variant.stock):Number(product.stock); return { ...product, variantId: variant?.id || null, size: variant?.size || '', uom: variant?.uom || '', variantStock: variant?.stock ?? null, quantity: Math.min(item.quantity, available) };
+      const product = products.find(entry => Number(entry.id) === Number(item.id));
+      if (!product) {
+        removedCartItems.push(`${item.name || 'An item'} is no longer available and was removed from your bag.`);
+        return null;
+      }
+
+      const variants = Array.isArray(product.variants) ? product.variants : [];
+      if (variants.length) {
+        const variant = variants.find(v => Number(v.id) === Number(item.variantId));
+        // A product may gain size variants after it was already placed in a bag.
+        // Never silently convert that old line into a size-less bangle order.
+        if (!variant) {
+          removedCartItems.push(`${product.name} now requires a size. It was removed from your bag; please add it again with a size.`);
+          return null;
+        }
+        const available = Number(variant.stock || 0);
+        if (available <= 0) {
+          removedCartItems.push(`${product.name} (${variant.size} ${variant.uom}) is out of stock and was removed from your bag.`);
+          return null;
+        }
+        return { ...product, variantId: variant.id, size: variant.size, uom: variant.uom, variantStock: variant.stock, quantity: Math.min(Number(item.quantity) || 1, available) };
+      }
+
+      const available = Number(product.stock || 0);
+      if (available <= 0) {
+        removedCartItems.push(`${product.name} is out of stock and was removed from your bag.`);
+        return null;
+      }
+      return { ...product, variantId: null, size: '', uom: '', variantStock: null, quantity: Math.min(Number(item.quantity) || 1, available) };
     })
     .filter(item => item && item.quantity > 0);
+
+  if (removedCartItems.length) {
+    localStorage.setItem('nivara-cart-notice', removedCartItems.join(' '));
+    saveCart();
+  }
 
   renderFilters();
   renderCollections();
   renderCart();
+  const cartNotice = localStorage.getItem('nivara-cart-notice');
+  if (cartNotice) {
+    localStorage.removeItem('nivara-cart-notice');
+    showToast(cartNotice);
+  }
 }
 
 function buildFallbackCollections(sourceProducts) {
@@ -1291,7 +1329,7 @@ function renderCheckoutReview() {
   if (discountLabel) discountLabel.textContent = `Promo discount (${Number(appliedPromo?.percent || LAUNCH_PROMO_PERCENT)}%)`;
   if (discountValue) discountValue.textContent = `- ${formatPrice(discount)}`;
   const items = document.getElementById('checkoutReviewItems');
-  if (items) items.innerHTML = cart.map(item => `<div class="checkout-review-item"><img src="${item.image}" alt="${item.name}" /><div><strong>${item.name}</strong><small>Qty: ${item.quantity}</small></div><span>${formatPrice(item.price * item.quantity)}</span></div>`).join('');
+  if (items) items.innerHTML = cart.map(item => `<div class="checkout-review-item"><img src="${item.image}" alt="${item.name}" /><div><strong>${item.name}</strong><small>${item.size ? `Size: ${item.size} ${item.uom} · ` : ''}Qty: ${item.quantity}</small></div><span>${formatPrice(item.price * item.quantity)}</span></div>`).join('');
   const promoInput = document.getElementById('checkoutPromoCode');
   const promoButton = document.getElementById('checkoutPromoApply');
   const promoStatus = document.getElementById('checkoutPromoStatus');
