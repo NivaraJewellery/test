@@ -120,7 +120,7 @@ async function loadProducts() {
   cart = cart
     .map(item => {
       const product = products.find(entry => entry.id === item.id);
-      return product ? { ...product, quantity: Math.min(item.quantity, product.stock) } : null;
+      if (!product) return null; const variant=(product.variants||[]).find(v=>Number(v.id)===Number(item.variantId)); const available=variant?Number(variant.stock):Number(product.stock); return { ...product, variantId: variant?.id || null, size: variant?.size || '', uom: variant?.uom || '', variantStock: variant?.stock ?? null, quantity: Math.min(item.quantity, available) };
     })
     .filter(item => item && item.quantity > 0);
 
@@ -162,7 +162,12 @@ function syncAnnouncementOffset() {
 function updateAnnouncementBar() {
   const bar = document.getElementById('announcementBar');
   if (!bar) return;
-  bar.textContent = 'Free shipping on orders above ₹1,999';
+  const state = getLaunchPromoState();
+  bar.textContent = state === 'active'
+    ? `Launch offer: ${LAUNCH_PROMO_PERCENT}% OFF • Use code ${LAUNCH_PROMO_CODE} • Started 21 Aug, 5:00 PM IST • Ends 23 Aug, 11:59 PM IST`
+    : state === 'upcoming'
+      ? `Launch offer starts today at 5:00 PM IST • ${LAUNCH_PROMO_PERCENT}% OFF • Use code ${LAUNCH_PROMO_CODE} • Ends 23 Aug, 11:59 PM IST`
+      : 'Complimentary shipping on orders above ₹1,999';
   requestAnimationFrame(syncAnnouncementOffset);
 }
 
@@ -364,8 +369,9 @@ function renderProducts() {
   const pageProducts = visible.slice((productPage - 1) * PRODUCTS_PER_PAGE, productPage * PRODUCTS_PER_PAGE);
 
   productsNode.innerHTML = pageProducts.map(product => {
-    const isOutOfStock = product.stock === 0;
-    const cartItem = cart.find(item => item.id === product.id);
+    const variants = Array.isArray(product.variants) ? product.variants : [];
+    const isOutOfStock = variants.length ? !variants.some(v => Number(v.stock)>0) : product.stock === 0;
+    const cartItem = variants.length ? null : cart.find(item => item.id === product.id && !item.variantId);
     const hoverImage = product.image_2 || product.image;
     return `
       <article class="product">
@@ -383,6 +389,7 @@ function renderProducts() {
           </div>
           <strong class="price">${formatPrice(product.price)}</strong>
         </div>
+        ${variants.length ? `<label class="size-selector">Size <select data-size-select="${product.id}"><option value="">Select size</option>${variants.map(v=>`<option value="${v.id}" ${Number(v.stock)<=0?'disabled':''}>${v.size} ${v.uom}${Number(v.stock)<=0?' - Sold out':''}</option>`).join('')}</select></label>` : ''}
         ${cartItem ? `
           <div class="quantity-stepper product-stepper">
             <button data-decrease="${product.id}" aria-label="Remove one ${product.name}">-</button>
@@ -420,14 +427,14 @@ function renderCart() {
       <img class="cart-photo" src="${item.image}" alt="${item.name}" />
       <div>
         <h3>${item.name}</h3>
-        <p>${formatPrice(item.price)}</p>
+        <p>${formatPrice(item.price)}${item.size ? ` · Size ${item.size} ${item.uom}` : ''}</p>
         ${item.care ? `<details class="care-details"><summary>Care instructions</summary><p>${item.care}</p></details>` : ''}
         <div class="bag-stepper">
-          <button data-decrease="${item.id}" aria-label="Remove one ${item.name}">-</button>
+          <button data-decrease="${item.id}" data-variant="${item.variantId || ''}" aria-label="Remove one ${item.name}">-</button>
           <span>${item.quantity}</span>
-          <button data-increase="${item.id}" aria-label="Add one more ${item.name}">+</button>
+          <button data-increase="${item.id}" data-variant="${item.variantId || ''}" aria-label="Add one more ${item.name}">+</button>
         </div>
-        <button data-remove="${item.id}">Remove all</button>
+        <button data-remove="${item.id}" data-variant="${item.variantId || ''}">Remove all</button>
       </div>
       <strong>${formatPrice(item.price * item.quantity)}</strong>
     </div>
@@ -452,7 +459,10 @@ function renderCart() {
   if (grandTotalNode) grandTotalNode.textContent = formatPrice(total);
 
   localStorage.setItem('nivara-cart', JSON.stringify(cart));
-  renderProducts();
+
+  // Cart count/totals are visible immediately. Rebuilding the full product grid
+  // is deferred to the next frame so Add to bag feels instant.
+  requestAnimationFrame(() => renderProducts());
 }
 
 function buildWhatsAppOrderMessage() {
@@ -597,49 +607,43 @@ function showSoldOutWarning(productName = 'This item') {
   showToast(`${productName} has just sold out. Please refresh the page to see the latest availability.`);
 }
 
-async function addToCart(id) {
-  const product = await getFreshProduct(id);
-
-  if (!product || Number(product.stock) <= 0) {
-    renderProducts();
-    return showSoldOutWarning(product?.name || 'This item');
+function addToCart(id) {
+  const product = products.find(item => Number(item.id) === Number(id));
+  if (!product) return;
+  const variants = Array.isArray(product.variants) ? product.variants : [];
+  let variant = null;
+  if (variants.length) {
+    const select = document.querySelector(`[data-size-select="${id}"]`);
+    const variantId = Number(select?.value);
+    variant = variants.find(v => Number(v.id) === variantId);
+    if (!variant) return showToast(`Please select a size for ${product.name}`);
+    if (Number(variant.stock) <= 0) return showSoldOutWarning(`${product.name} (${variant.size} ${variant.uom})`);
+  } else if (Number(product.stock) <= 0) {
+    renderProducts(); return showSoldOutWarning(product.name);
   }
-
-  const existing = cart.find(item => item.id === id);
+  const existing = cart.find(item => Number(item.id)===id && Number(item.variantId||0)===Number(variant?.id||0));
+  const available = variant ? Number(variant.stock) : Number(product.stock);
   if (existing) {
-    if (existing.quantity >= product.stock) return showToast(`Only ${product.stock} available for ${product.name}`);
+    if (existing.quantity >= available) return showToast(`Only ${available} available for ${product.name}${variant ? ` (${variant.size} ${variant.uom})` : ''}`);
     existing.quantity++;
   } else {
-    cart.push({ ...product, quantity: 1 });
+    cart.push({ ...product, variantId: variant?.id || null, size: variant?.size || '', uom: variant?.uom || '', variantStock: variant?.stock ?? null, quantity: 1 });
   }
-
-  renderCart();
-  showToast(`${product.name} added to your bag`, 'success');
+  renderCart(); showToast(`${product.name}${variant ? ` (${variant.size} ${variant.uom})` : ''} added to your bag`, 'success');
 }
 
-async function changeQuantity(id, delta) {
-  let product = products.find(item => item.id === id);
-  const existing = cart.find(item => item.id === id);
+async function changeQuantity(id, delta, variantId = null) {
+  let product = products.find(item => Number(item.id) === Number(id));
+  const existing = cart.find(item => Number(item.id)===Number(id) && Number(item.variantId||0)===Number(variantId||0));
   if (!product || !existing) return;
-
-  if (delta > 0) {
-    product = await getFreshProduct(id);
-
-    if (!product || Number(product.stock) <= 0) {
-      renderProducts();
-      return showSoldOutWarning(product?.name || existing.name || 'This item');
-    }
-  }
-
-  const nextQuantity = existing.quantity + delta;
-  if (nextQuantity <= 0) {
-    cart = cart.filter(item => item.id !== id);
-  } else if (nextQuantity <= product.stock) {
-    existing.quantity = nextQuantity;
-  } else {
-    showToast(`Only ${product.stock} available for ${product.name}`);
-  }
-
+  if (delta > 0) product = await getFreshProduct(id);
+  const variant = (product?.variants||[]).find(v=>Number(v.id)===Number(variantId));
+  const available = variantId ? Number(variant?.stock||0) : Number(product?.stock||0);
+  if (delta > 0 && available <= 0) return showSoldOutWarning(existing.name);
+  const next=existing.quantity+delta;
+  if(next<=0) cart=cart.filter(item=>!(Number(item.id)===Number(id)&&Number(item.variantId||0)===Number(variantId||0)));
+  else if(next<=available) existing.quantity=next;
+  else showToast(`Only ${available} available for ${product.name}${variant ? ` (${variant.size} ${variant.uom})` : ''}`);
   renderCart();
 }
 
@@ -927,12 +931,12 @@ document.addEventListener('click', async event => {
   const viewImage = event.target.closest('[data-view-image]');
   const notify = event.target.closest('[data-notify]');
   if (add) await addToCart(Number(add.dataset.add));
-  if (increase) await changeQuantity(Number(increase.dataset.increase), 1);
-  if (decrease) await changeQuantity(Number(decrease.dataset.decrease), -1);
+  if (increase) await changeQuantity(Number(increase.dataset.increase), 1, Number(increase.dataset.variant)||null);
+  if (decrease) await changeQuantity(Number(decrease.dataset.decrease), -1, Number(decrease.dataset.variant)||null);
   if (viewImage) openImageViewer(Number(viewImage.dataset.viewImage));
   if (notify) requestStockNotification(Number(notify.dataset.notify));
   if (remove) {
-    cart = cart.filter(item => item.id !== Number(remove.dataset.remove));
+    cart = cart.filter(item => !(Number(item.id) === Number(remove.dataset.remove) && Number(item.variantId||0) === Number(remove.dataset.variant||0)));
     renderCart();
   }
 });
@@ -1283,7 +1287,7 @@ function renderCheckoutReview() {
   const discountRow = document.getElementById('checkoutReviewDiscountRow');
   const discountLabel = document.getElementById('checkoutReviewDiscountLabel');
   const discountValue = document.getElementById('checkoutReviewDiscount');
-  if (discountRow) discountRow.hidden = !appliedPromo || discount <= 0;
+  if (discountRow) discountRow.hidden = !discount;
   if (discountLabel) discountLabel.textContent = `Promo discount (${Number(appliedPromo?.percent || LAUNCH_PROMO_PERCENT)}%)`;
   if (discountValue) discountValue.textContent = `- ${formatPrice(discount)}`;
   const items = document.getElementById('checkoutReviewItems');

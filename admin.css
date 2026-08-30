@@ -578,3 +578,5 @@ a {
     grid-column: 1 / -1;
   }
 }
+
+.variant-admin-box{margin:12px 0;padding:12px;border:1px solid var(--line);display:grid;gap:8px}.variant-admin-box small{color:var(--muted)}.variant-row{display:grid;grid-template-columns:1.2fr .8fr .8fr auto;gap:8px;margin:6px 0}.variant-row input,.variant-row select{width:100%;padding:10px;border:1px solid var(--line);background:white}@media(max-width:700px){.variant-row{grid-template-columns:1fr 1fr}.variant-row button{grid-column:1/-1}}

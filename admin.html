@@ -60,7 +60,8 @@
           <input name="type" placeholder="Type/filter" value="necklace" required />
           <select name="collection_id" id="collectionSelect"></select>
           <input name="price" type="number" min="0" placeholder="Selling price" required />
-          <input name="stock" type="number" min="0" placeholder="Stock quantity" required />
+          <input name="stock" type="number" min="0" placeholder="Stock quantity (normal products)" required />
+          <div class="variant-admin-box"><strong>Size variants (optional)</strong><small>Use for bangles. UOM: CM, Inch or MM. If variants are added, total stock is calculated from them.</small><div id="newProductVariants"></div><button type="button" id="addNewVariant">+ Add size</button></div>
           <input name="code" placeholder="Product code" />
           <input name="image" placeholder="Main image path, example assets/products/product-15.jpg" required />
           <input name="image_2" placeholder="Hover image path (optional)" />

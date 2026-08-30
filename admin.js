@@ -158,6 +158,24 @@ function isMissingDatabaseTable(error) {
     error.message.toLowerCase().includes('relation "orders" does not exist');
 }
 
+function variantRowsHtml(product) {
+  const rows = Array.isArray(product.variants) ? product.variants : [];
+  return rows.map(v => `<div class="variant-row" data-variant-row>
+    <input data-variant-size value="${v.size || ''}" placeholder="Size e.g. 2.4" />
+    <select data-variant-uom><option ${v.uom==='CM'?'selected':''}>CM</option><option ${v.uom==='Inch'?'selected':''}>Inch</option><option ${v.uom==='MM'?'selected':''}>MM</option></select>
+    <input data-variant-stock type="number" min="0" value="${Number(v.stock||0)}" placeholder="Stock" />
+    <button type="button" data-remove-variant-row>Remove</button>
+  </div>`).join('');
+}
+function readVariantRows(container) {
+  return [...container.querySelectorAll('[data-variant-row]')].map(row => ({
+    size: row.querySelector('[data-variant-size]').value.trim(),
+    uom: row.querySelector('[data-variant-uom]').value,
+    stock: Number(row.querySelector('[data-variant-stock]').value) || 0
+  })).filter(v => v.size);
+}
+function newVariantRowHtml(){ return `<div class="variant-row" data-variant-row><input data-variant-size placeholder="Size e.g. 2.4"/><select data-variant-uom><option>CM</option><option>Inch</option><option>MM</option></select><input data-variant-stock type="number" min="0" value="0" placeholder="Stock"/><button type="button" data-remove-variant-row>Remove</button></div>`; }
+
 function renderStockList() {
   stockList.innerHTML = products.map(product => `
     <article class="stock-card ${product.active ? '' : 'stock-card-hidden'}">
@@ -188,8 +206,9 @@ function renderStockList() {
         <label class="image-path-field">Category
           <input value="${product.category || ''}" data-category-input="${product.id}" placeholder="Necklace" />
         </label>
+        <div class="variant-admin-box" data-variant-box="${product.id}"><strong>Size variants</strong><small>Optional. UOM can be CM, Inch or MM.</small><div data-variant-list="${product.id}">${variantRowsHtml(product)}</div><button type="button" data-add-variant-row="${product.id}">+ Add size</button><button type="button" data-save-variants="${product.id}">Save sizes</button></div>
         <div class="stock-number">
-          <input type="number" min="0" value="${product.stock}" data-stock-input="${product.id}" />
+          <input type="number" min="0" value="${product.stock}" data-stock-input="${product.id}" ${(product.variants||[]).length?'disabled title="Stock is calculated from size variants"':''} />
           <span>${product.stock ? `${product.stock} available` : 'Out of stock'}</span>
         </div>
         <div class="stock-controls">
@@ -283,6 +302,8 @@ document.getElementById('productForm').addEventListener('submit', async event =>
   const form = event.currentTarget;
   const formData = new FormData(form);
   const product = Object.fromEntries(formData.entries());
+  product.variants = readVariantRows(document.getElementById('newProductVariants'));
+  if (product.variants.length) product.stock = product.variants.reduce((sum,v)=>sum+v.stock,0);
   const selectedCollection = collections.find(collection => collection.id === Number(product.collection_id));
   if (selectedCollection) {
     product.category = selectedCollection.name;
@@ -401,6 +422,9 @@ document.getElementById('bulkUpdateForm').addEventListener('submit', async event
     showToast(error.message);
   }
 });
+document.getElementById('addNewVariant')?.addEventListener('click', () => document.getElementById('newProductVariants').insertAdjacentHTML('beforeend', newVariantRowHtml()));
+document.getElementById('newProductVariants')?.addEventListener('click', e => { const b=e.target.closest('[data-remove-variant-row]'); if(b) b.closest('[data-variant-row]').remove(); });
+
 document.addEventListener('click', async event => {
   const saveButton = event.target.closest('[data-save-stock]');
   const saveDetailsButton = event.target.closest('[data-save-details]');
@@ -410,8 +434,14 @@ document.addEventListener('click', async event => {
   const removeButton = event.target.closest('[data-remove-product]');
   const saveCollectionButton = event.target.closest('[data-save-collection]');
   const deleteCollectionButton = event.target.closest('[data-delete-collection]');
+  const addVariantButton = event.target.closest('[data-add-variant-row]');
+  const removeVariantButton = event.target.closest('[data-remove-variant-row]');
+  const saveVariantsButton = event.target.closest('[data-save-variants]');
 
+  if (removeVariantButton) { removeVariantButton.closest('[data-variant-row]')?.remove(); return; }
+  if (addVariantButton) { document.querySelector(`[data-variant-list="${addVariantButton.dataset.addVariantRow}"]`).insertAdjacentHTML('beforeend', newVariantRowHtml()); return; }
   try {
+    if (saveVariantsButton) { const id=Number(saveVariantsButton.dataset.saveVariants); const box=document.querySelector(`[data-variant-list="${id}"]`); const variants=readVariantRows(box); await apiRequest('/api/admin-products',{method:'PATCH',body:JSON.stringify({id,variants})}); await loadProducts(); showToast('Size variants updated'); return; }
     if (saveCollectionButton) {
       const id = Number(saveCollectionButton.dataset.saveCollection);
       const name = document.querySelector(`[data-collection-name="${id}"]`).value.trim();
