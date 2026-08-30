@@ -100,102 +100,33 @@ async function accountRequest(payload) {
   return data;
 }
 
-async function loadProducts(options = {}) {
-  const { forceFresh = false } = options;
-  const cacheSuffix = forceFresh ? `?checkoutFresh=${Date.now()}` : '';
-  let productLoadError = null;
-
-  // Product and collection loading must be independent. A temporary failure in
-  // one endpoint should never leave both storefront sections blank.
-  const [productResult, collectionResult] = await Promise.allSettled([
-    fetch(`/api/products${cacheSuffix}`, forceFresh ? { cache: 'no-store' } : undefined),
-    fetch(`/api/collections${cacheSuffix}`, forceFresh ? { cache: 'no-store' } : undefined)
-  ]);
-
-  if (productResult.status === 'fulfilled') {
-    try {
-      const productData = await productResult.value.json();
-      if (!productResult.value.ok) throw new Error(productData.error || 'Unable to load products');
-      products = Array.isArray(productData.products) ? productData.products : [];
-    } catch (error) {
-      productLoadError = error;
-    }
-  } else {
-    productLoadError = productResult.reason;
-  }
-
-  if (productLoadError) {
-    try {
-      const fallback = await fetch('products.json', forceFresh ? { cache: 'no-store' } : undefined);
-      const fallbackProducts = await fallback.json();
-      products = Array.isArray(fallbackProducts) ? fallbackProducts : [];
-    } catch (fallbackError) {
-      products = [];
-    }
-  }
-
-  if (collectionResult.status === 'fulfilled') {
-    try {
-      const collectionData = await collectionResult.value.json();
-      collections = collectionResult.value.ok && Array.isArray(collectionData.collections)
-        ? collectionData.collections
-        : buildFallbackCollections(products);
-    } catch (error) {
-      collections = buildFallbackCollections(products);
-    }
-  } else {
+async function loadProducts() {
+  try {
+    const [productResponse, collectionResponse] = await Promise.all([
+      fetch('/api/products'),
+      fetch('/api/collections')
+    ]);
+    const productData = await productResponse.json();
+    const collectionData = await collectionResponse.json();
+    if (!productResponse.ok) throw new Error(productData.error || 'Unable to load products');
+    products = productData.products;
+    collections = collectionResponse.ok ? collectionData.collections : [];
+  } catch (error) {
+    const fallback = await fetch('products.json');
+    products = await fallback.json();
     collections = buildFallbackCollections(products);
   }
 
-  const removedItems = [];
-  const adjustedItems = [];
   cart = cart
     .map(item => {
-      const product = products.find(entry => Number(entry.id) === Number(item.id));
-      if (!product) {
-        removedItems.push({ name: item.name || 'An item', reason: 'unavailable' });
-        return null;
-      }
-
-      const variants = Array.isArray(product.variants) ? product.variants : [];
-      const variant = item.variantId
-        ? variants.find(v => Number(v.id) === Number(item.variantId))
-        : null;
-
-      // A variant that existed when the customer added it can also be removed
-      // or made unavailable while the customer is on the login page.
-      if (item.variantId && !variant) {
-        removedItems.push({ name: item.name || product.name, reason: 'variant-unavailable' });
-        return null;
-      }
-
-      const available = Math.max(0, Number(variant ? variant.stock : product.stock) || 0);
-      if (available <= 0) {
-        removedItems.push({ name: item.name || product.name, reason: 'out-of-stock' });
-        return null;
-      }
-
-      const requested = Math.max(1, Number(item.quantity) || 1);
-      const quantity = Math.min(requested, available);
-      if (quantity < requested) {
-        adjustedItems.push({ name: product.name, quantity });
-      }
-
-      return {
-        ...product,
-        variantId: variant?.id || null,
-        size: variant?.size || '',
-        uom: variant?.uom || '',
-        variantStock: variant?.stock ?? null,
-        quantity
-      };
+      const product = products.find(entry => entry.id === item.id);
+      if (!product) return null; const variant=(product.variants||[]).find(v=>Number(v.id)===Number(item.variantId)); const available=variant?Number(variant.stock):Number(product.stock); return { ...product, variantId: variant?.id || null, size: variant?.size || '', uom: variant?.uom || '', variantStock: variant?.stock ?? null, quantity: Math.min(item.quantity, available) };
     })
-    .filter(Boolean);
+    .filter(item => item && item.quantity > 0);
 
   renderFilters();
   renderCollections();
   renderCart();
-  return { removedItems, adjustedItems, productLoadError };
 }
 
 function buildFallbackCollections(sourceProducts) {
@@ -1540,55 +1471,27 @@ async function initializeStorefront() {
   renderCustomerMenu();
   const params = new URLSearchParams(window.location.search);
   const shouldResumeCheckout = params.get('checkout') === '1' || localStorage.getItem('nivara-return-to-checkout') === '1';
-  let checkoutNotice = '';
 
   if (shouldResumeCheckout) {
     setCheckoutTransitionLoading(true, 'Loading your bag and delivery details...');
-
-    // Consume the resume marker immediately. If any later request fails, a
-    // refresh/logout must not keep reopening the checkout transition loader.
-    localStorage.removeItem('nivara-return-to-checkout');
-    if (params.has('checkout')) {
-      params.delete('checkout');
-      const query = params.toString();
-      window.history.replaceState({}, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
-    }
   }
 
   try {
-    const loadResult = await loadProducts({ forceFresh: shouldResumeCheckout });
+    await loadProducts();
 
     if (shouldResumeCheckout) {
-      const removed = loadResult.removedItems || [];
-      if (removed.length) {
-        const names = [...new Set(removed.map(item => item.name).filter(Boolean))];
-        checkoutNotice = names.length === 1
-          ? `${names[0]} is no longer available and was removed from your bag.`
-          : `${names.length} unavailable items were removed from your bag.`;
+      localStorage.removeItem('nivara-return-to-checkout');
+      if (params.has('checkout')) {
+        params.delete('checkout');
+        const query = params.toString();
+        window.history.replaceState({}, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
       }
-
-      // Never continue to checkout on static fallback data. The live product
-      // list must be verified first so deleted/out-of-stock items cannot slip
-      // through because of a temporary API failure.
-      if (loadResult.productLoadError) {
-        checkoutNotice = 'We could not verify your bag right now. Please try Secure checkout again.';
-      } else if (customer && cart.length) {
+      if (customer && cart.length) {
         await startCheckout();
-      } else if (customer && !cart.length && !checkoutNotice) {
-        checkoutNotice = 'Your bag is empty. Please add an item before checkout.';
       }
-    }
-  } catch (error) {
-    if (shouldResumeCheckout) {
-      checkoutNotice = 'We could not refresh your bag. Please try again.';
     }
   } finally {
     setCheckoutTransitionLoading(false);
-    if (checkoutNotice) {
-      // Show the warning only after the transition overlay closes so it is
-      // visible to the customer on the storefront.
-      setTimeout(() => showToast(checkoutNotice), 50);
-    }
   }
 }
 initializeStorefront();
