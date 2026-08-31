@@ -162,10 +162,28 @@ async function loadProducts(options = {}) {
         ? variants.find(v => Number(v.id) === Number(item.variantId))
         : null;
 
-      // A variant that existed when the customer added it can also be removed
-      // or made unavailable while the customer is on the login page.
-      if (item.variantId && !variant) {
-        removedItems.push({ name: item.name || product.name, reason: 'variant-unavailable' });
+      // Variant identity is the selected size + UOM, not just the numeric row id.
+      // This prevents a stale cart entry from silently becoming a different size
+      // after an admin edits the bangle's size breakup.
+      const expectedSize = String(item.size || '').trim();
+      const expectedUom = String(item.uom || '').trim();
+      const variantIdentityChanged = Boolean(
+        variant && (
+          (expectedSize && String(variant.size || '').trim() !== expectedSize) ||
+          (expectedUom && String(variant.uom || '').trim() !== expectedUom)
+        )
+      );
+
+      // A selected bangle size that existed when the customer added it can be
+      // removed while the customer is on the login page. Remove only that cart
+      // line and do not substitute another available size of the same bangle.
+      if (item.variantId && (!variant || variantIdentityChanged)) {
+        const selectedLabel = [expectedSize, expectedUom].filter(Boolean).join(' ');
+        removedItems.push({
+          name: item.name || product.name,
+          displayName: `${item.name || product.name}${selectedLabel ? ` - Size ${selectedLabel}` : ''}`,
+          reason: 'variant-unavailable'
+        });
         return null;
       }
 
@@ -1606,9 +1624,14 @@ async function initializeStorefront() {
 
     if (shouldResumeCheckout) {
       const removed = loadResult.removedItems || [];
+      const adjusted = loadResult.adjustedItems || [];
+      const bagChangedWhileAway = removed.length > 0 || adjusted.length > 0;
+
       if (removed.length) {
-        const names = [...new Set(removed.map(item => item.name).filter(Boolean))];
+        const names = [...new Set(removed.map(item => item.displayName || item.name).filter(Boolean))];
         checkoutNotice = { type: 'unavailable-products', names };
+      } else if (adjusted.length) {
+        checkoutNotice = 'Your bag was updated because available stock changed. Please review your bag before continuing to checkout.';
       }
 
       // Never continue to checkout on static fallback data. The live product
@@ -1616,7 +1639,7 @@ async function initializeStorefront() {
       // through because of a temporary API failure.
       if (loadResult.productLoadError) {
         checkoutNotice = 'We could not verify your bag right now. Please try Secure checkout again.';
-      } else if (customer && cart.length) {
+      } else if (customer && cart.length && !bagChangedWhileAway) {
         await startCheckout();
       } else if (customer && !cart.length && !checkoutNotice) {
         checkoutNotice = 'Your bag is empty. Please add an item before checkout.';
