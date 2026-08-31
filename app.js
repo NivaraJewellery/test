@@ -1477,8 +1477,46 @@ async function applyCheckoutPromo() {
   renderCheckoutReview();
 }
 
-async function startCheckout() {
+async function startCheckout(options = {}) {
   if (!cart.length) return showToast('Your bag is empty');
+
+  const skipCartValidation = options && options.skipCartValidation === true;
+
+  // BUG1 v30d: validate the live product + selected bangle variant immediately
+  // before every checkout attempt. This covers the case where the customer is
+  // already signed in and an admin deletes a product/size after it was added to
+  // the bag. Never open checkout with stale cart lines.
+  if (!skipCartValidation) {
+    let validationResult;
+    setCheckoutTransitionLoading(true, 'Checking your bag...');
+    try {
+      validationResult = await loadProducts({ forceFresh: true });
+    } catch (error) {
+      setCheckoutTransitionLoading(false);
+      return showToast('We could not verify your bag right now. Please try Secure checkout again.', '', 7000);
+    }
+    setCheckoutTransitionLoading(false);
+
+    if (validationResult?.productLoadError) {
+      return showToast('We could not verify your bag right now. Please try Secure checkout again.', '', 7000);
+    }
+
+    const removed = validationResult?.removedItems || [];
+    const adjusted = validationResult?.adjustedItems || [];
+
+    if (removed.length) {
+      const names = [...new Set(removed.map(item => item.displayName || item.name).filter(Boolean))];
+      showUnavailableCheckoutWarning(names);
+      return;
+    }
+
+    if (adjusted.length) {
+      showToast('Your bag was updated because available stock changed. Please review your bag before continuing to checkout.', '', 7000);
+      return;
+    }
+
+    if (!cart.length) return showToast('Your bag is empty');
+  }
 
   // A checkout attempt is active customer activity, so extend the session before
   // creating the Razorpay order.
@@ -1640,7 +1678,7 @@ async function initializeStorefront() {
       if (loadResult.productLoadError) {
         checkoutNotice = 'We could not verify your bag right now. Please try Secure checkout again.';
       } else if (customer && cart.length && !bagChangedWhileAway) {
-        await startCheckout();
+        await startCheckout({ skipCartValidation: true });
       } else if (customer && !cart.length && !checkoutNotice) {
         checkoutNotice = 'Your bag is empty. Please add an item before checkout.';
       }
