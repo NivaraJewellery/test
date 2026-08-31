@@ -1424,7 +1424,16 @@ function renderCheckoutReview() {
   if (discountLabel) discountLabel.textContent = `Promo discount (${Number(appliedPromo?.percent || LAUNCH_PROMO_PERCENT)}%)`;
   if (discountValue) discountValue.textContent = `- ${formatPrice(discount)}`;
   const items = document.getElementById('checkoutReviewItems');
-  if (items) items.innerHTML = cart.map(item => `<div class="checkout-review-item"><img src="${item.image}" alt="${item.name}" /><div><strong>${item.name}</strong><small>Qty: ${item.quantity}</small></div><span>${formatPrice(item.price * item.quantity)}</span></div>`).join('');
+  if (items) {
+    items.innerHTML = cart.map(item => {
+      const itemCategory = String(item.category || item.type || '').trim().toLowerCase();
+      const isBangle = itemCategory === 'bangle' || itemCategory === 'bangles';
+      const bangleSize = isBangle && item.size
+        ? `<small class="checkout-item-size">Size: ${item.size}${item.uom ? ` ${item.uom}` : ''}</small>`
+        : '';
+      return `<div class="checkout-review-item"><img src="${item.image}" alt="${item.name}" /><div><strong>${item.name}</strong>${bangleSize}<small>Qty: ${item.quantity}</small></div><span>${formatPrice(item.price * item.quantity)}</span></div>`;
+    }).join('');
+  }
   const promoInput = document.getElementById('checkoutPromoCode');
   const promoButton = document.getElementById('checkoutPromoApply');
   const promoStatus = document.getElementById('checkoutPromoStatus');
