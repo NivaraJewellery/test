@@ -1268,6 +1268,15 @@ function setCheckoutPaymentLoading(isLoading) {
   if (card) card.classList.toggle('payment-loading', isLoading);
 }
 
+function setOrderConfirmationLoading(isLoading) {
+  let overlay = document.getElementById('orderConfirmationLoader');
+  if (!overlay) return;
+  overlay.hidden = !isLoading;
+  overlay.classList.toggle('show', isLoading);
+  overlay.setAttribute('aria-hidden', isLoading ? 'false' : 'true');
+  document.body.classList.toggle('order-confirmation-loading', isLoading);
+}
+
 async function proceedToPayment() {
   if (!cart.length) return showToast('Your bag is empty');
 
@@ -1325,6 +1334,7 @@ async function proceedToPayment() {
       },
       theme: { color: '#8a571d' },
       handler: async paymentResponse => {
+        setOrderConfirmationLoading(true);
         try {
           const verifyResponse = await fetch('/api/verify-payment', {
             method: 'POST',
@@ -1340,7 +1350,9 @@ async function proceedToPayment() {
       closeCart();
       await loadProducts();
       showOrderSummary(completedOrder, true);
+          setOrderConfirmationLoading(false);
         } catch (error) {
+          setOrderConfirmationLoading(false);
           showToast(error.message || 'Payment verification failed.');
         }
       },
