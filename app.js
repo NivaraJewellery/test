@@ -716,16 +716,62 @@ async function changeQuantity(id, delta, variantId = null) {
   renderCart();
 }
 
-function showToast(message, type = '') {
+function showToast(message, type = '', duration = 2600) {
   const toast = document.getElementById('toast');
   window.clearTimeout(toast.hideTimer);
+  toast.classList.remove('toast-availability-warning');
   toast.textContent = message;
   toast.classList.toggle('toast-success', type === 'success');
   toast.classList.add('show');
   toast.hideTimer = setTimeout(() => {
     toast.classList.remove('show');
     toast.textContent = '';
-  }, 2600);
+  }, duration);
+}
+
+function showUnavailableCheckoutWarning(productNames = []) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+
+  const names = [...new Set((productNames || []).filter(Boolean))];
+  window.clearTimeout(toast.hideTimer);
+  toast.textContent = '';
+  toast.classList.remove('toast-success');
+  toast.classList.add('toast-availability-warning');
+
+  const content = document.createElement('div');
+  content.className = 'toast-warning-content';
+
+  const title = document.createElement('strong');
+  title.className = 'toast-warning-title';
+  title.textContent = names.length === 1 ? 'Product no longer available' : 'Some products are no longer available';
+
+  const message = document.createElement('span');
+  message.className = 'toast-warning-message';
+  if (names.length === 1) {
+    message.textContent = `${names[0]} is no longer available and has been removed from your bag. Please check our other products and choose another piece.`;
+  } else if (names.length > 1) {
+    message.textContent = `${names.join(', ')} are no longer available and have been removed from your bag. Please check our other products and choose another piece.`;
+  } else {
+    message.textContent = 'A product in your bag is no longer available and has been removed. Please check our other products and choose another piece.';
+  }
+
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'toast-close';
+  close.setAttribute('aria-label', 'Close message');
+  close.textContent = '×';
+
+  content.append(title, message);
+  toast.append(content, close);
+  toast.classList.add('show');
+
+  // Keep availability warnings visible considerably longer than normal toasts,
+  // while still allowing the customer to dismiss them immediately with ×.
+  toast.hideTimer = setTimeout(() => {
+    toast.classList.remove('show');
+    toast.textContent = '';
+  }, 12000);
 }
 
 function renderCustomerMenu() {
@@ -1562,9 +1608,7 @@ async function initializeStorefront() {
       const removed = loadResult.removedItems || [];
       if (removed.length) {
         const names = [...new Set(removed.map(item => item.name).filter(Boolean))];
-        checkoutNotice = names.length === 1
-          ? `${names[0]} is no longer available and was removed from your bag.`
-          : `${names.length} unavailable items were removed from your bag.`;
+        checkoutNotice = { type: 'unavailable-products', names };
       }
 
       // Never continue to checkout on static fallback data. The live product
@@ -1587,7 +1631,13 @@ async function initializeStorefront() {
     if (checkoutNotice) {
       // Show the warning only after the transition overlay closes so it is
       // visible to the customer on the storefront.
-      setTimeout(() => showToast(checkoutNotice), 50);
+      setTimeout(() => {
+        if (checkoutNotice?.type === 'unavailable-products') {
+          showUnavailableCheckoutWarning(checkoutNotice.names);
+        } else {
+          showToast(checkoutNotice, '', 7000);
+        }
+      }, 50);
     }
   }
 }

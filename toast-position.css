@@ -54,3 +54,53 @@
     text-align: center;
   }
 }
+
+/* Bug 1 follow-up: checkout availability warning */
+.toast.toast-availability-warning {
+  width: min(430px, calc(100vw - 32px));
+  max-width: 430px;
+  padding: 16px 48px 16px 18px;
+  background: #5f351f;
+  border: 1px solid rgba(255, 232, 196, 0.42);
+  border-radius: 8px;
+  line-height: 1.45;
+}
+
+.toast-warning-content {
+  display: grid;
+  gap: 5px;
+}
+
+.toast-warning-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff8ed;
+}
+
+.toast-warning-message {
+  display: block;
+  font-size: 13px;
+  color: #fff3df;
+}
+
+.toast-close {
+  position: absolute;
+  top: 9px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #fff8ed;
+  font: 400 24px/30px Arial, sans-serif;
+  cursor: pointer;
+}
+
+.toast-close:hover,
+.toast-close:focus-visible {
+  background: rgba(255,255,255,.14);
+  outline: none;
+}
