@@ -53,6 +53,7 @@
   <link rel="stylesheet" href="launch-fixes.css" />
   <link rel="stylesheet" href="checkout-transition.css" />
   <link rel="stylesheet" href="mobile-ui-fix-v20.css" />
+  <link rel="stylesheet" href="feedback.css" />
 </head>
 <body>
   <div class="announcement" id="announcementBar">Complimentary shipping on orders above &#8377;1,999</div>
@@ -128,6 +129,15 @@
       </div>
     </section>
 
+    <section class="customer-voices" id="customerVoices">
+      <div class="customer-voices-head">
+        <p class="eyebrow">From our customers</p>
+        <h2>What Our Customers Say</h2>
+        <p>Verified shopping experiences and product reviews from Nivara customers.</p>
+      </div>
+      <div class="customer-review-grid" id="customerReviewGrid"><p class="customer-voices-empty">Customer stories will appear here.</p></div>
+    </section>
+
   </main>
 
   <footer id="contact"><div class="footer-logo"><img src="assets/logo-wordmark.png" alt="Nivara Jewellery" /></div><p>Designed for the moments you&rsquo;ll remember.</p><div><a href="#shop">Shop</a><a href="#story">About</a><span class="contact-details">Contact: +91 78998 90736<br>Email: support@nivarajewellery.com</span><a class="instagram-link" href="https://www.instagram.com/the_nivara_jewellery?igsh=aWtvbTczMnhhcXJt&utm_source=qr" target="_blank" rel="noopener"><svg class="instagram-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17" cy="7" r="1"></circle></svg> Instagram</a></div><small>&copy; 2026 Nivara Jewellery. All rights reserved.</small></footer>
@@ -165,6 +175,28 @@
 </div>
 
 <section class="profile-modal order-summary-modal" id="orderSummaryModal" aria-hidden="true" hidden><div class="profile-card order-summary-card"><button class="profile-close" id="orderSummaryClose" type="button" aria-label="Close order summary">&times;</button><p class="eyebrow" id="orderSummaryEyebrow">Order confirmed</p><h2 id="orderSummaryTitle">Thank you for your order</h2><div id="orderSummaryContent"></div><div class="order-summary-actions"><button class="button button-dark" id="downloadOrderSummary" type="button">Download order summary</button><button class="button" id="backToOrders" type="button">Back to order history</button><button class="link-button" id="continueAfterOrder" type="button">Continue shopping</button></div></div></section>
+  <section class="website-feedback-modal" id="websiteFeedbackModal" hidden aria-hidden="true">
+    <div class="website-feedback-card" role="dialog" aria-modal="true" aria-labelledby="websiteFeedbackTitle">
+      <button class="website-feedback-close" id="websiteFeedbackClose" type="button" aria-label="Close feedback">&times;</button>
+      <div id="websiteFeedbackFormWrap">
+        <p class="eyebrow">A quick question</p>
+        <h2 id="websiteFeedbackTitle">How was your Nivara experience?</h2>
+        <p class="website-feedback-intro">Your order is confirmed. If you have a minute, please rate your shopping experience. This is optional.</p>
+        <form id="websiteFeedbackForm">
+          <div class="feedback-question"><span>Overall website experience</span><div class="star-rating" data-rating-group="overall"></div></div>
+          <div class="feedback-question"><span>Finding and selecting products</span><div class="star-rating" data-rating-group="discovery"></div></div>
+          <div class="feedback-question"><span>Checkout and payment experience</span><div class="star-rating" data-rating-group="checkout"></div></div>
+          <div class="feedback-question"><span>Website speed and navigation</span><div class="star-rating" data-rating-group="performance"></div></div>
+          <label class="feedback-comment-label" for="websiteFeedbackComments">Comments or suggestions <small>(optional)</small></label>
+          <textarea id="websiteFeedbackComments" maxlength="1500" placeholder="Tell us what you liked or what we can improve..."></textarea>
+          <div class="website-feedback-actions"><button class="button button-dark" type="submit">Submit feedback</button><button class="link-button" id="websiteFeedbackLater" type="button">Maybe later</button></div>
+          <small class="website-feedback-status" id="websiteFeedbackStatus" aria-live="polite"></small>
+        </form>
+      </div>
+      <div class="website-feedback-thanks" id="websiteFeedbackThanks" hidden><div class="customer-review-stars">★★★★★</div><h3>Thank you!</h3><p>Your feedback helps us improve Nivara Jewellery.</p><button class="button button-dark" id="websiteFeedbackDone" type="button">Continue shopping</button></div>
+    </div>
+  </section>
+
   <section class="image-viewer" id="imageViewer" aria-hidden="true" hidden><div class="image-viewer-card"><button class="image-viewer-close" id="imageViewerClose" type="button" aria-label="Close image viewer">&times;</button><img id="imageViewerPhoto" src="" alt="" /><div class="image-viewer-controls"><button id="imageViewerPrev" type="button">Previous</button><span class="image-viewer-count" id="imageViewerCount">1/1</span><button id="imageViewerNext" type="button">Next</button><label for="imageZoomSlider">Zoom</label><input id="imageZoomSlider" type="range" min="1" max="3" step="0.05" value="1" /><span id="imageZoomLevel">100%</span><button id="imageZoomReset" type="button">Reset</button></div></div></section>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>

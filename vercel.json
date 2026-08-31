@@ -63,6 +63,22 @@
       "destination": "/api?route=razorpay-webhook"
     },
     {
+      "source": "/api/admin-feedback",
+      "destination": "/api?route=admin-feedback"
+    },
+    {
+      "source": "/api/website-feedback",
+      "destination": "/api?route=website-feedback"
+    },
+    {
+      "source": "/api/product-review",
+      "destination": "/api?route=product-review"
+    },
+    {
+      "source": "/api/public-reviews",
+      "destination": "/api?route=public-reviews"
+    },
+    {
       "source": "/",
       "destination": "/index.html"
     },
@@ -81,6 +97,10 @@
     {
       "source": "/notify",
       "destination": "/notify.html"
+    },
+    {
+      "source": "/review",
+      "destination": "/review.html"
     },
     {
       "source": "/maintenance",

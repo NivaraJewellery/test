@@ -155,11 +155,14 @@ function renderOrders() {
 }
 
 async function loadReports() {
-  const data = await apiRequest('/api/admin-orders');
+  const [data, feedbackData] = await Promise.all([apiRequest('/api/admin-orders'), apiRequest('/api/admin-feedback')]);
   orders = data.orders || [];
   report = data.report || {};
+  websiteFeedback = feedbackData.websiteFeedback || [];
+  productReviews = feedbackData.productReviews || [];
   renderReport();
   renderOrders();
+  renderFeedbackAdmin();
 }
 
 document.getElementById('loginForm').addEventListener('submit', async event => {
@@ -224,12 +227,17 @@ document.addEventListener('click', async event => {
     if (saveOrderStatusButton) {
       const id = Number(saveOrderStatusButton.dataset.saveOrderStatus);
       const select = document.querySelector(`[data-order-status="${id}"]`);
-      await apiRequest('/api/admin-orders', {
+      const result = await apiRequest('/api/admin-orders', {
         method: 'PATCH',
         body: JSON.stringify({ id, status: select.value })
       });
       await loadReports();
-      showToast('Order status updated');
+      if (select.value === 'delivered') {
+        if (result.reviewEmail?.sent) showToast('Order delivered · product review email sent');
+        else if (result.reviewEmail?.alreadySent) showToast('Order delivered · review email was already sent');
+        else if (result.reviewEmail?.error || result.reviewEmail?.reason) showToast(`Order delivered · review email not sent: ${result.reviewEmail.error || result.reviewEmail.reason}`);
+        else showToast('Order status updated');
+      } else showToast('Order status updated');
     }
   } catch (error) {
     showToast(error.message);
@@ -272,5 +280,79 @@ reconcilePaymentForm?.addEventListener('submit', async event => {
   } finally {
     button.disabled = false;
     button.textContent = originalText;
+  }
+});
+
+// v30h feedback moderation
+let websiteFeedback = [];
+let productReviews = [];
+
+function adminEscape(value = '') {
+  return String(value).replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[character]));
+}
+
+function adminStars(value) {
+  const rating = Math.max(0, Math.min(5, Number(value || 0)));
+  return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+}
+
+function moderationBadge(approved) {
+  return `<span class="${approved ? 'feedback-approved' : 'feedback-pending'}">${approved ? 'Visible on website' : 'Pending approval'}</span>`;
+}
+
+function renderFeedbackAdmin() {
+  const websiteNode = document.getElementById('websiteFeedbackList');
+  const productNode = document.getElementById('productReviewList');
+  if (websiteNode) {
+    websiteNode.innerHTML = websiteFeedback.length ? websiteFeedback.map(item => `
+      <article class="feedback-admin-card">
+        <div>
+          <h3>${adminEscape(item.customer_name || item.customer_email || 'Customer')} ${moderationBadge(item.approved)}</h3>
+          <small>Order ${adminEscape(item.razorpay_order_id || '')} · ${new Date(item.created_at).toLocaleString('en-IN')}</small>
+          <p class="feedback-rating-line"><span class="feedback-stars">${adminStars(item.overall_rating)}</span> Overall ${item.overall_rating}/5 · Find products ${item.discovery_rating}/5 · Checkout ${item.checkout_rating}/5 · Speed/navigation ${item.performance_rating}/5</p>
+          <p>${item.comments ? adminEscape(item.comments) : '<em>No comment provided.</em>'}</p>
+        </div>
+        <div class="feedback-admin-actions"><button type="button" data-feedback-type="website" data-feedback-id="${item.id}" data-feedback-approved="${item.approved ? 'false' : 'true'}">${item.approved ? 'Hide from website' : 'Show on website'}</button></div>
+      </article>
+    `).join('') : '<p class="muted-text">No website feedback yet.</p>';
+  }
+  if (productNode) {
+    productNode.innerHTML = productReviews.length ? productReviews.map(item => `
+      <article class="feedback-admin-card">
+        <div>
+          <h3>${adminEscape(item.product_name || 'Product')} ${moderationBadge(item.approved)}</h3>
+          <small>${adminEscape(item.customer_name || item.customer_email || 'Customer')} · Order ${adminEscape(item.razorpay_order_id || '')} · ${new Date(item.created_at).toLocaleString('en-IN')}</small>
+          <p class="feedback-rating-line"><span class="feedback-stars">${adminStars(item.rating)}</span> ${item.rating}/5</p>
+          <p>${item.comments ? adminEscape(item.comments) : '<em>No comment provided.</em>'}</p>
+        </div>
+        <div class="feedback-admin-actions"><button type="button" data-feedback-type="product" data-feedback-id="${item.id}" data-feedback-approved="${item.approved ? 'false' : 'true'}">${item.approved ? 'Hide from website' : 'Show on website'}</button></div>
+      </article>
+    `).join('') : '<p class="muted-text">No product reviews yet.</p>';
+  }
+}
+
+async function loadFeedbackAdmin() {
+  const data = await apiRequest('/api/admin-feedback');
+  websiteFeedback = data.websiteFeedback || [];
+  productReviews = data.productReviews || [];
+  renderFeedbackAdmin();
+}
+
+document.addEventListener('click', async event => {
+  const button = event.target.closest('[data-feedback-id]');
+  if (!button) return;
+  try {
+    await apiRequest('/api/admin-feedback', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        id: Number(button.dataset.feedbackId),
+        type: button.dataset.feedbackType,
+        approved: button.dataset.feedbackApproved === 'true'
+      })
+    });
+    await loadFeedbackAdmin();
+    showToast(button.dataset.feedbackApproved === 'true' ? 'Feedback approved for website' : 'Feedback hidden from website');
+  } catch (error) {
+    showToast(error.message);
   }
 });

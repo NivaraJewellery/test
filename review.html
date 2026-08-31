@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Review Your Purchase | Nivara Jewellery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="review.css" />
+</head>
+<body>
+  <main class="review-shell">
+    <a class="review-brand" href="/"><img src="assets/logo-wordmark.png" alt="Nivara Jewellery" /></a>
+    <section class="review-card">
+      <p class="review-eyebrow">Verified purchase</p>
+      <h1>Tell us what you think</h1>
+      <p id="reviewIntro">Loading your delivered order...</p>
+      <div id="reviewState" class="review-state">Please wait a moment.</div>
+      <form id="productReviewForm" hidden>
+        <div id="reviewProducts"></div>
+        <button class="review-submit" type="submit">Submit product review</button>
+        <p id="reviewStatus" class="review-status" aria-live="polite"></p>
+      </form>
+      <div id="reviewThanks" class="review-thanks" hidden>
+        <div class="thanks-stars">★★★★★</div>
+        <h2>Thank you for your feedback</h2>
+        <p>Your review has been received and will be published after a quick check by Nivara Jewellery.</p>
+        <a href="/">Continue shopping</a>
+      </div>
+    </section>
+  </main>
+  <script src="review.js"></script>
+</body>
+</html>
