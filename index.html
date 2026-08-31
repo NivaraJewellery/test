@@ -129,13 +129,17 @@
       </div>
     </section>
 
-    <section class="customer-voices" id="customerVoices">
+    <section class="customer-voices" id="customerVoices" hidden aria-label="Customer feedback">
       <div class="customer-voices-head">
         <p class="eyebrow">From our customers</p>
         <h2>What Our Customers Say</h2>
         <p>Verified shopping experiences and product reviews from Nivara customers.</p>
       </div>
-      <div class="customer-review-grid" id="customerReviewGrid"><p class="customer-voices-empty">Customer stories will appear here.</p></div>
+      <div class="customer-review-carousel" id="customerReviewCarousel">
+        <button class="customer-review-nav customer-review-prev" id="customerReviewPrev" type="button" aria-label="Previous customer feedback">&#8249;</button>
+        <div class="customer-review-grid" id="customerReviewGrid" tabindex="0" aria-label="Published customer feedback"></div>
+        <button class="customer-review-nav customer-review-next" id="customerReviewNext" type="button" aria-label="Next customer feedback">&#8250;</button>
+      </div>
     </section>
 
   </main>

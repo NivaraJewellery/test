@@ -1867,23 +1867,97 @@ function publicCustomerName(name) {
   return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1].charAt(0).toUpperCase()}.` : parts[0];
 }
 
-async function loadPublicReviews() {
+let customerReviewCarouselTimer = null;
+
+function stopCustomerReviewCarousel() {
+  if (customerReviewCarouselTimer) clearInterval(customerReviewCarouselTimer);
+  customerReviewCarouselTimer = null;
+}
+
+function customerReviewStep() {
+  const grid = document.getElementById('customerReviewGrid');
+  const card = grid?.querySelector('.customer-review-card');
+  if (!grid || !card) return 0;
+  const gap = parseFloat(getComputedStyle(grid).gap || '0') || 0;
+  return card.getBoundingClientRect().width + gap;
+}
+
+function updateCustomerReviewNavigation() {
+  const grid = document.getElementById('customerReviewGrid');
+  const prev = document.getElementById('customerReviewPrev');
+  const next = document.getElementById('customerReviewNext');
+  if (!grid) return;
+  const canScroll = grid.scrollWidth > grid.clientWidth + 5;
+  if (prev) prev.hidden = !canScroll;
+  if (next) next.hidden = !canScroll;
+}
+
+function moveCustomerReviews(direction = 1) {
   const grid = document.getElementById('customerReviewGrid');
   if (!grid) return;
+  const step = customerReviewStep();
+  if (!step) return;
+  const maxScroll = Math.max(0, grid.scrollWidth - grid.clientWidth);
+  let target = grid.scrollLeft + (direction * step);
+  if (direction > 0 && grid.scrollLeft >= maxScroll - 8) target = 0;
+  if (direction < 0 && grid.scrollLeft <= 8) target = maxScroll;
+  grid.scrollTo({ left: target, behavior: 'smooth' });
+}
+
+function startCustomerReviewCarousel() {
+  stopCustomerReviewCarousel();
+  const grid = document.getElementById('customerReviewGrid');
+  if (!grid || grid.scrollWidth <= grid.clientWidth + 5) return;
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  customerReviewCarouselTimer = setInterval(() => moveCustomerReviews(1), 5000);
+}
+
+function setupCustomerReviewCarousel() {
+  const carousel = document.getElementById('customerReviewCarousel');
+  const grid = document.getElementById('customerReviewGrid');
+  if (!carousel || !grid) return;
+  updateCustomerReviewNavigation();
+  startCustomerReviewCarousel();
+  if (carousel.dataset.carouselReady === 'true') return;
+  carousel.dataset.carouselReady = 'true';
+  document.getElementById('customerReviewPrev')?.addEventListener('click', () => { moveCustomerReviews(-1); startCustomerReviewCarousel(); });
+  document.getElementById('customerReviewNext')?.addEventListener('click', () => { moveCustomerReviews(1); startCustomerReviewCarousel(); });
+  carousel.addEventListener('mouseenter', stopCustomerReviewCarousel);
+  carousel.addEventListener('mouseleave', startCustomerReviewCarousel);
+  carousel.addEventListener('focusin', stopCustomerReviewCarousel);
+  carousel.addEventListener('focusout', event => { if (!carousel.contains(event.relatedTarget)) startCustomerReviewCarousel(); });
+  grid.addEventListener('pointerdown', stopCustomerReviewCarousel);
+  grid.addEventListener('pointerup', startCustomerReviewCarousel);
+  window.addEventListener('resize', () => { updateCustomerReviewNavigation(); startCustomerReviewCarousel(); });
+}
+
+async function loadPublicReviews() {
+  const section = document.getElementById('customerVoices');
+  const grid = document.getElementById('customerReviewGrid');
+  if (!grid || !section) return;
+  stopCustomerReviewCarousel();
+  section.hidden = true;
   try {
     const response = await fetch('/api/public-reviews', { cache: 'no-store' });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Unable to load reviews.');
     const reviews = Array.isArray(data.reviews) ? data.reviews : [];
-    grid.innerHTML = reviews.length ? reviews.map(review => `
+    if (!reviews.length) {
+      grid.innerHTML = '';
+      return;
+    }
+    grid.innerHTML = reviews.map(review => `
       <article class="customer-review-card">
         <div class="customer-review-stars" aria-label="${Number(review.rating || 0)} out of 5 stars">${reviewStars(review.rating)}</div>
         <blockquote>“${escapeFeedbackHtml(review.comments || '')}”</blockquote>
         <div class="customer-review-meta"><strong>— ${escapeFeedbackHtml(publicCustomerName(review.customer_name))}</strong><small>${escapeFeedbackHtml(review.kind === 'product' ? `Verified purchase · ${review.label || ''}` : 'Verified customer · Shopping experience')}</small></div>
       </article>
-    `).join('') : '<p class="customer-voices-empty">Customer stories will appear here soon.</p>';
+    `).join('');
+    section.hidden = false;
+    requestAnimationFrame(setupCustomerReviewCarousel);
   } catch (_) {
-    grid.innerHTML = '<p class="customer-voices-empty">Customer stories will appear here soon.</p>';
+    grid.innerHTML = '';
+    section.hidden = true;
   }
 }
 
