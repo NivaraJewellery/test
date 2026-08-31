@@ -133,7 +133,7 @@ function renderOrders() {
           <p>${new Date(order.createdAt).toLocaleString('en-IN')} - ${formatPrice(order.amount)} - Shipping ${Number(order.shippingCharge || 0) === 0 ? 'FREE' : formatPrice(order.shippingCharge)} - ${order.paymentId || 'Payment pending'}</p>
           <p><strong>${customer.name || order.customerEmail || 'Customer'}</strong> - ${customer.phone || 'No phone'} - ${order.customerEmail || customer.email || 'No email'}</p>
           <p>${address}</p>
-          <ul>${products.map(item => `<li>${item.name || `Product ${item.id}`} x ${item.quantity}</li>`).join('')}</ul>
+          <ul>${products.map(item => { const isBangle=String(item.type||item.category||'').toLowerCase().includes('bangle') || Boolean(item.variantId && item.size); return `<li>${item.name || `Product ${item.id}`}${isBangle&&item.size?` — Size: ${item.size}${item.uom?` ${item.uom}`:''}`:''} x ${item.quantity}</li>`; }).join('')}</ul>
         </div>
         <div class="order-status-controls">
           <select data-order-status="${order.id}">
