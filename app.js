@@ -622,24 +622,27 @@ function renderCatalogSearchUI(resultCount = null) {
   const clear = document.getElementById('catalogSearchClear');
   const status = document.getElementById('catalogSearchStatus');
 
-  if (input && input.value !== catalogSearchQuery) {
+  if (input && document.activeElement !== input && input.value !== catalogSearchQuery) {
     input.value = catalogSearchQuery;
   }
 
-  if (clear) clear.hidden = !catalogSearchQuery;
+  if (clear) clear.hidden = !normalizeCatalogSearch(catalogSearchQuery);
 
   if (status) {
-    if (!catalogSearchQuery) {
+    const displayQuery = catalogSearchQuery.trim();
+    if (!displayQuery) {
       status.textContent = '';
     } else {
       const count = resultCount == null ? getVisibleProducts().length : resultCount;
-      status.textContent = `${count} product${count === 1 ? '' : 's'} found for "${catalogSearchQuery}"`;
+      status.textContent = `${count} product${count === 1 ? '' : 's'} found for "${displayQuery}"`;
     }
   }
 }
 
 function setCatalogSearch(value) {
-  catalogSearchQuery = String(value || '').trim();
+  // Preserve exactly what the user typed, including spaces.
+  // Search normalization happens separately inside productMatchesCatalogSearch().
+  catalogSearchQuery = String(value || '');
   productPage = 1;
   renderProducts();
 }
