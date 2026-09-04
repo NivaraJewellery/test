@@ -5,6 +5,7 @@ let activeFilter = 'all';
 let mobilePriceFilter = 'all';
 let mobileInStockOnly = false;
 let mobileSort = 'recommended';
+let catalogSearchQuery = '';
 let customer = JSON.parse(localStorage.getItem('nivara-customer') || 'null');
 let savedAddresses = [];
 let selectedAddressId = null;
@@ -580,10 +581,77 @@ function getStockLabel(product) {
   return 'In stock';
 }
 
+
+function normalizeCatalogSearch(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function productMatchesCatalogSearch(product, query) {
+  const normalizedQuery = normalizeCatalogSearch(query);
+  if (!normalizedQuery) return true;
+
+  const searchable = normalizeCatalogSearch([
+    product.name,
+    product.type,
+    product.category,
+    product.collection_name,
+    product.collection_slug,
+    product.code,
+    product.description
+  ].filter(Boolean).join(' '));
+
+  const terms = normalizedQuery.split(/\s+/).filter(Boolean);
+
+  return terms.every(term => {
+    if (searchable.includes(term)) return true;
+
+    // Friendly plural/singular matching: "bangle" <-> "bangles", etc.
+    const singular = term.endsWith('s') && term.length > 3 ? term.slice(0, -1) : term;
+    const plural = term.endsWith('s') ? term : `${term}s`;
+    return searchable.includes(singular) || searchable.includes(plural);
+  });
+}
+
+function renderCatalogSearchUI(resultCount = null) {
+  const input = document.getElementById('catalogSearchInput');
+  const clear = document.getElementById('catalogSearchClear');
+  const status = document.getElementById('catalogSearchStatus');
+
+  if (input && input.value !== catalogSearchQuery) {
+    input.value = catalogSearchQuery;
+  }
+
+  if (clear) clear.hidden = !catalogSearchQuery;
+
+  if (status) {
+    if (!catalogSearchQuery) {
+      status.textContent = '';
+    } else {
+      const count = resultCount == null ? getVisibleProducts().length : resultCount;
+      status.textContent = `${count} product${count === 1 ? '' : 's'} found for "${catalogSearchQuery}"`;
+    }
+  }
+}
+
+function setCatalogSearch(value) {
+  catalogSearchQuery = String(value || '').trim();
+  productPage = 1;
+  renderProducts();
+}
+
 function getVisibleProducts() {
   let visible = activeFilter === 'all'
     ? [...products]
     : products.filter(product => product.type === activeFilter || product.collection_slug === activeFilter);
+
+  if (catalogSearchQuery) {
+    visible = visible.filter(product => productMatchesCatalogSearch(product, catalogSearchQuery));
+  }
 
   if (mobilePriceFilter === 'under1000') {
     visible = visible.filter(product => Number(product.price || 0) < 1000);
@@ -634,9 +702,13 @@ function renderProducts() {
   const pageProducts = visible.slice((productPage - 1) * PRODUCTS_PER_PAGE, productPage * PRODUCTS_PER_PAGE);
 
   if (!pageProducts.length) {
-    productsNode.innerHTML = '<div class="no-products-found"><h3>No products found</h3><p>Try changing or clearing your filters.</p></div>';
+    const message = catalogSearchQuery
+      ? `No products found for "${catalogSearchQuery}". Try another keyword or clear the search.`
+      : 'Try changing or clearing your filters.';
+    productsNode.innerHTML = `<div class="no-products-found"><h3>No products found</h3><p>${message}</p></div>`;
     renderProductPagination(visible.length);
     renderMobileFilterUI();
+    renderCatalogSearchUI(visible.length);
     return;
   }
 
@@ -676,6 +748,7 @@ function renderProducts() {
   }).join('');
   renderProductPagination(visible.length);
   renderMobileFilterUI();
+  renderCatalogSearchUI(visible.length);
 }
 
 function renderCart() {
@@ -1430,6 +1503,44 @@ document.getElementById('collectionPrev')?.addEventListener('click', () => scrol
 document.getElementById('collectionNext')?.addEventListener('click', () => scrollCollections(1));
 collectionsNode?.addEventListener('scroll', updateCollectionScrollButtons, { passive: true });
 window.addEventListener('resize', updateCollectionScrollButtons);
+
+
+const catalogSearchInput = document.getElementById('catalogSearchInput');
+const catalogSearchClear = document.getElementById('catalogSearchClear');
+let catalogSearchTimer = null;
+
+catalogSearchInput?.addEventListener('input', event => {
+  const value = event.currentTarget.value;
+  if (catalogSearchClear) catalogSearchClear.hidden = !value.trim();
+
+  window.clearTimeout(catalogSearchTimer);
+  catalogSearchTimer = window.setTimeout(() => {
+    setCatalogSearch(value);
+  }, 180);
+});
+
+catalogSearchInput?.addEventListener('keydown', event => {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    window.clearTimeout(catalogSearchTimer);
+    setCatalogSearch(event.currentTarget.value);
+    document.getElementById('products')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  if (event.key === 'Escape' && event.currentTarget.value) {
+    event.currentTarget.value = '';
+    setCatalogSearch('');
+    event.currentTarget.blur();
+  }
+});
+
+catalogSearchClear?.addEventListener('click', () => {
+  if (catalogSearchInput) {
+    catalogSearchInput.value = '';
+    catalogSearchInput.focus();
+  }
+  setCatalogSearch('');
+});
 
 document.getElementById('mobileFilterButton')?.addEventListener('click', () => openCatalogSheet('filterSheet'));
 document.getElementById('mobileSortButton')?.addEventListener('click', () => openCatalogSheet('sortSheet'));

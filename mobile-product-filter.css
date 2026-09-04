@@ -273,3 +273,91 @@
     overflow: hidden;
   }
 }
+
+
+/* Nivara Jewellery - General Product Search */
+.catalog-search {
+  width: min(760px, 100%);
+  margin: 0 0 20px;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line, #e7dcc8);
+  border-radius: 999px;
+  background: #fffdf8;
+  padding: 0 14px 0 18px;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.catalog-search:focus-within {
+  border-color: #b88a4a;
+  box-shadow: 0 0 0 3px rgba(184, 138, 74, .12);
+}
+
+.catalog-search-icon {
+  flex: 0 0 auto;
+  color: #9a6d31;
+  font-size: 21px;
+  line-height: 1;
+}
+
+.catalog-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 48px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #30271e;
+  font: 500 14px "DM Sans", sans-serif;
+}
+
+.catalog-search input::placeholder {
+  color: #938677;
+}
+
+.catalog-search-clear {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: #f4eadb;
+  color: #4b3825;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.catalog-search-clear[hidden] {
+  display: none !important;
+}
+
+.catalog-search-status {
+  min-height: 18px;
+  margin: -10px 0 16px;
+  color: var(--muted, #756958);
+  font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .catalog-search {
+    width: 100%;
+    min-height: 46px;
+    margin: 0 0 12px;
+    border-radius: 12px;
+    padding-left: 14px;
+  }
+
+  .catalog-search input {
+    height: 44px;
+    font-size: 13px;
+  }
+
+  .catalog-search-status {
+    margin: -4px 0 10px;
+    padding-left: 2px;
+    font-size: 11px;
+  }
+}

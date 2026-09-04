@@ -104,6 +104,21 @@
 
     <section class="section products-section" id="shop">
       <div class="section-heading"><div><p class="eyebrow">A little something special</p><h2>Most loved pieces</h2></div></div>
+
+      <div class="catalog-search" role="search">
+        <span class="catalog-search-icon" aria-hidden="true">⌕</span>
+        <input
+          id="catalogSearchInput"
+          type="search"
+          inputmode="search"
+          autocomplete="off"
+          placeholder="Search jewellery, e.g. Bangles, Necklace..."
+          aria-label="Search products"
+        />
+        <button id="catalogSearchClear" class="catalog-search-clear" type="button" aria-label="Clear search" hidden>&times;</button>
+      </div>
+      <p id="catalogSearchStatus" class="catalog-search-status" aria-live="polite"></p>
+
       <div class="product-filter-carousel" aria-label="Product categories">
         <button class="product-filter-scroll-button" id="filterPrev" type="button" aria-label="Scroll product categories left">&lt;</button>
         <div class="filters" id="productFilters" tabindex="0" aria-label="Scrollable product categories"><button class="filter active" data-filter="all">All</button></div>
