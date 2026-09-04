@@ -44,7 +44,7 @@
   <link rel="stylesheet" href="logo-refinement.css" />
   <link rel="stylesheet" href="hero-image.css" />
   <link rel="stylesheet" href="hero-slideshow.css" />
-  <link rel="stylesheet" href="product-inventory.css?v=32" />
+  <link rel="stylesheet" href="product-inventory.css" />
   <link rel="stylesheet" href="toast-position.css" />
   <link rel="stylesheet" href="modern-theme.css" />
   <link rel="stylesheet" href="checkout-fix.css" />
@@ -53,8 +53,8 @@
   <link rel="stylesheet" href="launch-fixes.css" />
   <link rel="stylesheet" href="checkout-transition.css" />
   <link rel="stylesheet" href="mobile-ui-fix-v20.css" />
-<link rel="icon" type="image/png" sizes="512x512" href="/favicon.png?v=2">
-<link rel="shortcut icon" type="image/png" href="/favicon.png?v=2">
+  <link rel="stylesheet" href="feedback.css" />
+  <link rel="stylesheet" href="mobile-product-filter.css?v=1" />
 </head>
 <body>
   <div class="announcement" id="announcementBar">Complimentary shipping on orders above &#8377;1,999</div>
@@ -110,43 +110,21 @@
         <button class="product-filter-scroll-button" id="filterNext" type="button" aria-label="Scroll product categories right">&gt;</button>
       </div>
 
-      <div class="mobile-discovery-bar" id="mobileDiscoveryBar">
-        <button type="button" class="mobile-discovery-button" id="mobileSortButton">
-          <span>↕</span><strong>SORT</strong>
+      <div class="mobile-discovery-bar" aria-label="Product discovery controls">
+        <button id="mobileSortButton" class="mobile-discovery-action" type="button">
+          <span aria-hidden="true">⇅</span>
+          <span>SORT</span>
+          <b id="sortActiveLabel"></b>
         </button>
-        <button type="button" class="mobile-discovery-button" id="mobileFilterButton">
-          <span>☰</span><strong id="mobileFilterLabel">FILTER</strong>
+        <button id="mobileFilterButton" class="mobile-discovery-action" type="button">
+          <span aria-hidden="true">☷</span>
+          <span id="mobileFilterLabel">FILTER</span>
         </button>
       </div>
-      <div class="active-filter-chips" id="activeFilterChips" aria-live="polite"></div>
-         <div class="skeleton-line"></div>
-    <div class="skeleton-line skeleton-short"></div>
-    <div class="skeleton-button"></div>
-  </article>
+      <div id="activeFilterChips" class="active-filter-chips" aria-live="polite"></div>
 
-  <article class="product product-skeleton">
-    <div class="skeleton-image"></div>
-    <div class="skeleton-line skeleton-title"></div>
-    <div class="skeleton-line"></div>
-    <div class="skeleton-line skeleton-short"></div>
-    <div class="skeleton-button"></div>
-  </article>
-
-  <article class="product product-skeleton">
-    <div class="skeleton-image"></div>
-    <div class="skeleton-line skeleton-title"></div>
-    <div class="skeleton-line"></div>
-    <div class="skeleton-line skeleton-short"></div>
-    <div class="skeleton-button"></div>
-  </article>
-</div>
+      <div class="products" id="products"></div>
       <div class="product-pagination" id="productPagination"></div>
-    </section>
-
-
-    <section class="section customer-reviews-section" id="reviews">
-      <div class="section-heading"><div><p class="eyebrow">Loved by Nivara customers</p><h2>Customer reviews</h2></div></div>
-      <div id="customerReviews" class="customer-reviews-grid"><p class="reviews-empty">Reviews from delivered orders will appear here.</p></div>
     </section>
 
     <section class="editorial" id="story">
@@ -166,67 +144,83 @@
       </div>
     </section>
 
+    <section class="customer-voices" id="customerVoices" hidden aria-label="Customer feedback">
+      <div class="customer-voices-head">
+        <p class="eyebrow">From our customers</p>
+        <h2>What Our Customers Say</h2>
+        <p>Verified shopping experiences and product reviews from Nivara customers.</p>
+      </div>
+      <div class="customer-review-carousel" id="customerReviewCarousel">
+        <button class="customer-review-nav customer-review-prev" id="customerReviewPrev" type="button" aria-label="Previous customer feedback">&#8249;</button>
+        <div class="customer-review-grid" id="customerReviewGrid" tabindex="0" aria-label="Published customer feedback"></div>
+        <button class="customer-review-nav customer-review-next" id="customerReviewNext" type="button" aria-label="Next customer feedback">&#8250;</button>
+      </div>
+    </section>
+
   </main>
 
   <footer id="contact"><div class="footer-logo"><img src="assets/logo-wordmark.png" alt="Nivara Jewellery" /></div><p>Designed for the moments you&rsquo;ll remember.</p><div><a href="#shop">Shop</a><a href="#story">About</a><span class="contact-details">Contact: +91 78998 90736<br>Email: support@nivarajewellery.com</span><a class="instagram-link" href="https://www.instagram.com/the_nivara_jewellery?igsh=aWtvbTczMnhhcXJt&utm_source=qr" target="_blank" rel="noopener"><svg class="instagram-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17" cy="7" r="1"></circle></svg> Instagram</a></div><small>&copy; 2026 Nivara Jewellery. All rights reserved.</small></footer>
 
 
-<section class="mobile-filter-sheet" id="mobileFilterSheet" aria-hidden="true">
-  <div class="mobile-sheet-backdrop" data-mobile-filter-close></div>
-  <div class="mobile-sheet-card" role="dialog" aria-modal="true" aria-labelledby="mobileFilterTitle">
-    <div class="mobile-sheet-header">
-      <div>
-        <p class="eyebrow">Find your perfect piece</p>
-        <h2 id="mobileFilterTitle">Filters</h2>
-      </div>
-      <button type="button" class="mobile-sheet-close" data-mobile-filter-close aria-label="Close filters">×</button>
-    </div>
-    <div class="mobile-filter-body">
-      <section class="mobile-filter-section">
-        <h3>Category</h3>
-        <div id="mobileCategoryOptions" class="mobile-category-options"></div>
-      </section>
-      <section class="mobile-filter-section">
-        <h3>Price range</h3>
-        <div class="mobile-price-grid">
-          <label>Min<input id="mobilePriceMin" type="number" min="0" inputmode="numeric" placeholder="0"></label>
-          <label>Max<input id="mobilePriceMax" type="number" min="0" inputmode="numeric" placeholder="Any"></label>
-        </div>
-      </section>
-      <section class="mobile-filter-section">
-        <h3>Availability</h3>
-        <label class="mobile-check-row">
-          <input id="mobileInStockOnly" type="checkbox">
-          <span>In stock only</span>
-        </label>
-      </section>
-    </div>
-    <div class="mobile-sheet-footer">
-      <button type="button" class="mobile-clear-button" id="mobileClearFilters">CLEAR ALL</button>
-      <button type="button" class="mobile-apply-button" id="mobileApplyFilters">SHOW PRODUCTS</button>
-    </div>
-  </div>
-</section>
+  <div id="catalogSheetOverlay" class="catalog-sheet-overlay" hidden></div>
 
-<section class="mobile-sort-sheet" id="mobileSortSheet" aria-hidden="true">
-  <div class="mobile-sheet-backdrop" data-mobile-sort-close></div>
-  <div class="mobile-sort-card" role="dialog" aria-modal="true" aria-labelledby="mobileSortTitle">
-    <div class="mobile-sheet-header">
+  <section id="filterSheet" class="catalog-sheet filter-sheet" aria-hidden="true" hidden>
+    <div class="catalog-sheet-header">
       <div>
-        <p class="eyebrow">Arrange products</p>
-        <h2 id="mobileSortTitle">Sort by</h2>
+        <small>FILTERS</small>
+        <h2>Find your jewellery</h2>
       </div>
-      <button type="button" class="mobile-sheet-close" data-mobile-sort-close aria-label="Close sort">×</button>
+      <button type="button" class="catalog-sheet-close" data-close-catalog-sheet aria-label="Close filters">&times;</button>
     </div>
-    <div class="mobile-sort-options">
+
+    <div class="filter-sheet-layout">
+      <nav class="filter-sheet-tabs" aria-label="Filter groups">
+        <button type="button" class="filter-tab active" data-filter-tab="category">Category</button>
+        <button type="button" class="filter-tab" data-filter-tab="price">Price</button>
+        <button type="button" class="filter-tab" data-filter-tab="availability">Availability</button>
+      </nav>
+
+      <div class="filter-sheet-options">
+        <div class="filter-option-panel active" data-filter-panel="category">
+          <div id="mobileCategoryOptions"></div>
+        </div>
+
+        <div class="filter-option-panel" data-filter-panel="price">
+          <label><input type="radio" name="mobilePrice" value="all" checked> All prices</label>
+          <label><input type="radio" name="mobilePrice" value="under1000"> Under Rs. 1,000</label>
+          <label><input type="radio" name="mobilePrice" value="1000-1999"> Rs. 1,000 - 1,999</label>
+          <label><input type="radio" name="mobilePrice" value="2000plus"> Rs. 2,000 &amp; above</label>
+        </div>
+
+        <div class="filter-option-panel" data-filter-panel="availability">
+          <label><input id="mobileInStock" type="checkbox"> In stock only</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="catalog-sheet-footer">
+      <button id="clearMobileFilters" type="button" class="catalog-clear">CLEAR ALL</button>
+      <button id="applyMobileFilters" type="button" class="catalog-apply">SHOW PRODUCTS</button>
+    </div>
+  </section>
+
+  <section id="sortSheet" class="catalog-sheet sort-sheet" aria-hidden="true" hidden>
+    <div class="catalog-sheet-header">
+      <div>
+        <small>SORT BY</small>
+        <h2>Choose an order</h2>
+      </div>
+      <button type="button" class="catalog-sheet-close" data-close-catalog-sheet aria-label="Close sort">&times;</button>
+    </div>
+
+    <div class="sort-options">
       <label><input type="radio" name="mobileSort" value="recommended" checked> Recommended</label>
       <label><input type="radio" name="mobileSort" value="price-low"> Price: Low to High</label>
       <label><input type="radio" name="mobileSort" value="price-high"> Price: High to Low</label>
     </div>
-  </div>
-</section>
+  </section>
 
-<aside class="cart-panel" id="cartPanel" aria-label="Shopping bag" aria-hidden="true"><div class="cart-header"><h2>Your bag <span id="cartTitleCount">0</span></h2><button id="cartClose" aria-label="Close shopping bag">&times;</button></div><div id="cartItems" class="cart-items"></div><div class="cart-empty" id="cartEmpty">Your bag is waiting for its first sparkle.<br><button id="continueShopping">Continue shopping</button></div><div class="cart-footer"><div class="cart-total-row"><span>Subtotal</span><strong id="cartSubtotal">&#8377;0</strong></div><div class="cart-total-row promo-discount-row" id="promoDiscountRow" hidden><span id="promoDiscountLabel">Promo discount</span><strong id="promoDiscount">- &#8377;0</strong></div><div class="cart-total-row" id="cartShippingRow" hidden><span>Standard shipping charge</span><strong id="cartShipping">&#8377;0</strong></div><div class="cart-total-row cart-grand-total" id="cartGrandTotalRow" hidden><span>Total</span><strong id="cartGrandTotal">&#8377;0</strong></div><small>Standard shipping charge: ₹99 below ₹1,999. Free shipping from ₹1,999. Promo applies to product subtotal only.</small><button class="button button-dark" id="checkoutButton" type="button">Secure checkout</button><button class="button whatsapp-checkout-button" id="whatsappCheckoutButton" type="button">Continue on WhatsApp</button></div></aside><div class="overlay" id="overlay"></div>
+<aside class="cart-panel" id="cartPanel" aria-label="Shopping bag" aria-hidden="true"><div class="cart-header"><h2>Your bag <span id="cartTitleCount">0</span></h2><button id="cartClose" aria-label="Close shopping bag">&times;</button></div><div id="cartItems" class="cart-items"></div><div class="cart-empty" id="cartEmpty">Your bag is waiting for its first sparkle.<br><button id="continueShopping">Continue shopping</button></div><div class="cart-footer"><div class="cart-total-row"><span>Subtotal</span><strong id="cartSubtotal">&#8377;0</strong></div><div class="cart-total-row promo-discount-row" id="promoDiscountRow" hidden><span id="promoDiscountLabel">Promo discount</span><strong id="promoDiscount">- &#8377;0</strong></div><div class="cart-total-row" id="cartShippingRow" hidden><span>Shipping</span><strong id="cartShipping">&#8377;0</strong></div><div class="cart-total-row cart-grand-total" id="cartGrandTotalRow" hidden><span>Total</span><strong id="cartGrandTotal">&#8377;0</strong></div><small>Shipping: ₹99 below ₹1,999. Free shipping from ₹1,999. Promo applies to product subtotal only.</small><button class="button button-dark" id="checkoutButton" type="button">Secure checkout</button><button class="button whatsapp-checkout-button" id="whatsappCheckoutButton" type="button">Continue on WhatsApp</button></div></aside><div class="overlay" id="overlay"></div>
   <section class="checkout-review-modal" id="checkoutReviewModal" aria-hidden="true" hidden>
     <div class="checkout-review-card" role="dialog" aria-modal="true" aria-labelledby="checkoutReviewTitle">
       <div class="checkout-review-topbar"><button class="checkout-review-back" id="checkoutReviewClose" type="button" aria-label="Back to bag">&larr;</button><span class="checkout-mini-brand">NIVARA</span><span class="checkout-secure">100% Secured Payment &#128274;</span></div>
@@ -240,7 +234,7 @@
           <small id="checkoutPromoStatus" class="checkout-promo-status" aria-live="polite"></small>
         </div>
         <div class="checkout-customer-card"><div class="checkout-section-label">Customer details</div><div id="checkoutCustomerDetails"></div></div>
-        <div class="checkout-bill-card"><div class="checkout-bill-row"><span>Subtotal</span><strong id="checkoutReviewSubtotal">Rs. 0</strong></div><div class="checkout-bill-row" id="checkoutReviewDiscountRow" hidden><span id="checkoutReviewDiscountLabel">Promo discount</span><strong id="checkoutReviewDiscount">- Rs. 0</strong></div><div class="checkout-bill-row"><span>Standard shipping charge</span><strong id="checkoutReviewShipping">Rs. 0</strong></div><div class="checkout-bill-row checkout-bill-total"><span>Total</span><strong id="checkoutReviewTotal">Rs. 0</strong></div></div>
+        <div class="checkout-bill-card"><div class="checkout-bill-row"><span>Subtotal</span><strong id="checkoutReviewSubtotal">Rs. 0</strong></div><div class="checkout-bill-row" id="checkoutReviewDiscountRow" hidden><span id="checkoutReviewDiscountLabel">Promo discount</span><strong id="checkoutReviewDiscount">- Rs. 0</strong></div><div class="checkout-bill-row"><span>Shipping</span><strong id="checkoutReviewShipping">Rs. 0</strong></div><div class="checkout-bill-row checkout-bill-total"><span>Total</span><strong id="checkoutReviewTotal">Rs. 0</strong></div></div>
       </div>
       <div class="checkout-review-footer"><div class="checkout-trust">Secure checkout powered by Razorpay</div><button class="button button-dark" id="checkoutContinueButton" type="button">Continue to payment</button></div>
     </div>
@@ -249,7 +243,38 @@
   <section class="profile-modal address-book-modal" id="deliveryAddressModal" aria-hidden="true" hidden><div class="profile-card address-book-card"><button class="profile-close" id="deliveryAddressClose" type="button" aria-label="Close delivery addresses">&times;</button><p class="eyebrow" id="deliveryAddressEyebrow">Delivery address</p><h2 id="deliveryAddressTitle">Choose delivery address</h2><div id="savedAddressList" class="saved-address-list"></div><button class="button" id="addAddressButton" type="button">+ Add new address</button><form id="addressForm" class="address-form" hidden><input name="id" type="hidden" /><label>Label<input name="label" placeholder="Home, Work, Parents" required /></label><div class="address-form-grid"><label>Recipient name<input name="recipientName" required /></label><label>Phone<input name="phone" type="tel" required /></label><label class="wide">Address line 1<input name="line1" required /></label><label class="wide">Address line 2<input name="line2" /></label><label>City<input name="city" required /></label><label>State<input name="state" required /></label><label>Pincode<input name="pincode" inputmode="numeric" required /></label><label class="checkbox-line"><input name="isDefault" type="checkbox" /> Set as default</label></div><div class="address-form-actions"><button class="button button-dark" type="submit">Save address</button><button class="link-button" id="cancelAddressEdit" type="button">Cancel</button></div></form><button class="button button-dark" id="useSelectedAddress" type="button">Use selected address</button></div></section>
   <section class="profile-modal" id="ordersModal" aria-hidden="true" hidden><div class="profile-card"><button class="profile-close" id="ordersClose" type="button" aria-label="Close orders">&times;</button><p class="eyebrow">My orders</p><h2>Order history</h2><div id="ordersList" class="orders-list"></div></div></section>
 
-  <section class="profile-modal order-summary-modal" id="orderSummaryModal" aria-hidden="true" hidden><div class="profile-card order-summary-card"><button class="profile-close" id="orderSummaryClose" type="button" aria-label="Close order summary">&times;</button><p class="eyebrow" id="orderSummaryEyebrow">Order confirmed</p><h2 id="orderSummaryTitle">Thank you for your order</h2><div id="orderSummaryContent"></div><div class="order-summary-actions"><button class="button button-dark" id="downloadOrderSummary" type="button">Download order summary</button><button class="button" id="backToOrders" type="button">Back to order history</button><button class="link-button" id="continueAfterOrder" type="button">Continue shopping</button></div></div></section>
+  <div class="order-confirmation-loader" id="orderConfirmationLoader" hidden aria-hidden="true" role="status" aria-live="polite">
+  <div class="order-confirmation-loader-card">
+    <span class="order-confirmation-spinner" aria-hidden="true"></span>
+    <strong>Payment successful</strong>
+    <p>Confirming your order...</p>
+    <small>Please don’t close this window.</small>
+  </div>
+</div>
+
+<section class="profile-modal order-summary-modal" id="orderSummaryModal" aria-hidden="true" hidden><div class="profile-card order-summary-card"><button class="profile-close" id="orderSummaryClose" type="button" aria-label="Close order summary">&times;</button><p class="eyebrow" id="orderSummaryEyebrow">Order confirmed</p><h2 id="orderSummaryTitle">Thank you for your order</h2><div id="orderSummaryContent"></div><div class="order-summary-actions"><button class="button button-dark" id="downloadOrderSummary" type="button">Download order summary</button><button class="button" id="backToOrders" type="button">Back to order history</button><button class="link-button" id="continueAfterOrder" type="button">Continue shopping</button></div></div></section>
+  <section class="website-feedback-modal" id="websiteFeedbackModal" hidden aria-hidden="true">
+    <div class="website-feedback-card" role="dialog" aria-modal="true" aria-labelledby="websiteFeedbackTitle">
+      <button class="website-feedback-close" id="websiteFeedbackClose" type="button" aria-label="Close feedback">&times;</button>
+      <div id="websiteFeedbackFormWrap">
+        <p class="eyebrow">A quick question</p>
+        <h2 id="websiteFeedbackTitle">How was your Nivara experience?</h2>
+        <p class="website-feedback-intro">Your order is confirmed. If you have a minute, please rate your shopping experience. This is optional.</p>
+        <form id="websiteFeedbackForm">
+          <div class="feedback-question"><span>Overall website experience</span><div class="star-rating" data-rating-group="overall"></div></div>
+          <div class="feedback-question"><span>Finding and selecting products</span><div class="star-rating" data-rating-group="discovery"></div></div>
+          <div class="feedback-question"><span>Checkout and payment experience</span><div class="star-rating" data-rating-group="checkout"></div></div>
+          <div class="feedback-question"><span>Website speed and navigation</span><div class="star-rating" data-rating-group="performance"></div></div>
+          <label class="feedback-comment-label" for="websiteFeedbackComments">Comments or suggestions <small>(optional)</small></label>
+          <textarea id="websiteFeedbackComments" maxlength="1500" placeholder="Tell us what you liked or what we can improve..."></textarea>
+          <div class="website-feedback-actions"><button class="button button-dark" type="submit">Submit feedback</button><button class="link-button" id="websiteFeedbackLater" type="button">Maybe later</button></div>
+          <small class="website-feedback-status" id="websiteFeedbackStatus" aria-live="polite"></small>
+        </form>
+      </div>
+      <div class="website-feedback-thanks" id="websiteFeedbackThanks" hidden><div class="customer-review-stars">★★★★★</div><h3>Thank you!</h3><p>Your feedback helps us improve Nivara Jewellery.</p><button class="button button-dark" id="websiteFeedbackDone" type="button">Continue shopping</button></div>
+    </div>
+  </section>
+
   <section class="image-viewer" id="imageViewer" aria-hidden="true" hidden><div class="image-viewer-card"><button class="image-viewer-close" id="imageViewerClose" type="button" aria-label="Close image viewer">&times;</button><img id="imageViewerPhoto" src="" alt="" /><div class="image-viewer-controls"><button id="imageViewerPrev" type="button">Previous</button><span class="image-viewer-count" id="imageViewerCount">1/1</span><button id="imageViewerNext" type="button">Next</button><label for="imageZoomSlider">Zoom</label><input id="imageZoomSlider" type="range" min="1" max="3" step="0.05" value="1" /><span id="imageZoomLevel">100%</span><button id="imageZoomReset" type="button">Reset</button></div></div></section>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
