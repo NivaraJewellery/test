@@ -18,7 +18,8 @@ const handlers = {
   'promo-release': require('../lib/handlers/promo-release'),
   'promo': require('../lib/handlers/promo'),
   'verify-payment': require('../lib/handlers/verify-payment'),
-  'razorpay-webhook': require('../lib/handlers/razorpay-webhook')
+  'razorpay-webhook': require('../lib/handlers/razorpay-webhook'),
+  'traffic': require('../lib/handlers/traffic')
 };
 
 function resolveRoute(req) {

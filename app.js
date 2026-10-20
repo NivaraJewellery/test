@@ -2,10 +2,6 @@ let products = [];
 let collections = [];
 let cart = JSON.parse(localStorage.getItem('nivara-cart') || '[]');
 let activeFilter = 'all';
-let mobilePriceFilter = 'all';
-let mobileInStockOnly = false;
-let mobileSort = 'recommended';
-let catalogSearchQuery = '';
 let customer = JSON.parse(localStorage.getItem('nivara-customer') || 'null');
 let savedAddresses = [];
 let selectedAddressId = null;
@@ -30,10 +26,10 @@ function setCheckoutTransitionLoading(isLoading, message = 'Loading your saved d
   overlay.classList.toggle('open', Boolean(isLoading));
   overlay.setAttribute('aria-hidden', isLoading ? 'false' : 'true');
 }
-const LAUNCH_PROMO_CODE = 'NIVARA5';
+const LAUNCH_PROMO_CODE = 'GANESHA5';
 const LAUNCH_PROMO_PERCENT = 5;
-const LAUNCH_PROMO_START = Date.parse('2026-08-21T11:30:00.000Z'); // 21 Aug 2026, 5:00 PM IST
-const LAUNCH_PROMO_END = Date.parse('2026-08-23T18:30:00.000Z');
+const LAUNCH_PROMO_START = Date.parse('2026-09-12T00:00:00.000Z'); // active now
+const LAUNCH_PROMO_END = Date.parse('2026-09-14T18:30:00.000Z'); // 15 Sep 2026, 12:00 AM IST (exclusive)
 let appliedPromo = null;
 
 const formatPrice = value => `Rs. ${Number(value).toLocaleString('en-IN')}`;
@@ -255,9 +251,8 @@ function updateAnnouncementBar() {
   if (!bar) return;
   const state = getLaunchPromoState();
   bar.textContent = state === 'active'
-    ? `Launch offer: ${LAUNCH_PROMO_PERCENT}% OFF • Use code ${LAUNCH_PROMO_CODE} • Started 21 Aug, 5:00 PM IST • Ends 23 Aug, 11:59 PM IST`
-    : state === 'upcoming'
-      ? `Launch offer starts today at 5:00 PM IST • ${LAUNCH_PROMO_PERCENT}% OFF • Use code ${LAUNCH_PROMO_CODE} • Ends 23 Aug, 11:59 PM IST`
+    ? `Ganesh Chaturthi offer: ${LAUNCH_PROMO_PERCENT}% OFF • Use code ${LAUNCH_PROMO_CODE} • Ends Monday, 14 Sep, 11:59 PM IST`
+    : state === 'upcoming' ? `Ganesh Chaturthi offer: ${LAUNCH_PROMO_PERCENT}% OFF • Use code ${LAUNCH_PROMO_CODE} • Starts soon • Ends Monday, 14 Sep, 11:59 PM IST`
       : 'Complimentary shipping on orders above ₹1,999';
   requestAnimationFrame(syncAnnouncementOffset);
 }
@@ -385,148 +380,6 @@ async function applyPromoCode() {
   }
 }
 
-
-function getMobileCategoryEntries() {
-  if (collections.length) {
-    return collections
-      .filter(collection => collection.slug)
-      .map(collection => [collection.slug, collection.name]);
-  }
-
-  return [...new Map(
-    products
-      .filter(product => product.type || product.collection_slug)
-      .map(product => [
-        product.collection_slug || product.type,
-        product.collection_name || product.category || friendlyLabel(product.type)
-      ])
-  )];
-}
-
-function getMobileFilterCount() {
-  let count = 0;
-  if (activeFilter !== 'all') count += 1;
-  if (mobilePriceFilter !== 'all') count += 1;
-  if (mobileInStockOnly) count += 1;
-  return count;
-}
-
-function getMobileCategoryLabel(value) {
-  const found = getMobileCategoryEntries().find(([slug]) => slug === value);
-  return found ? friendlyLabel(found[1]) : friendlyLabel(value);
-}
-
-function renderMobileFilterUI() {
-  const categoryNode = document.getElementById('mobileCategoryOptions');
-  if (categoryNode) {
-    const entries = getMobileCategoryEntries();
-    categoryNode.innerHTML = [
-      `<label><input type="radio" name="mobileCategory" value="all" ${activeFilter === 'all' ? 'checked' : ''}> All categories</label>`,
-      ...entries.map(([value, label]) =>
-        `<label><input type="radio" name="mobileCategory" value="${value}" ${activeFilter === value ? 'checked' : ''}> ${friendlyLabel(label)}</label>`
-      )
-    ].join('');
-  }
-
-  const price = document.querySelector(`input[name="mobilePrice"][value="${mobilePriceFilter}"]`);
-  if (price) price.checked = true;
-
-  const stock = document.getElementById('mobileInStock');
-  if (stock) stock.checked = mobileInStockOnly;
-
-  const sort = document.querySelector(`input[name="mobileSort"][value="${mobileSort}"]`);
-  if (sort) sort.checked = true;
-
-  const count = getMobileFilterCount();
-  const filterLabel = document.getElementById('mobileFilterLabel');
-  if (filterLabel) filterLabel.textContent = count ? `FILTER · ${count}` : 'FILTER';
-
-  const sortLabel = document.getElementById('sortActiveLabel');
-  if (sortLabel) {
-    sortLabel.textContent =
-      mobileSort === 'price-low' ? 'LOW–HIGH' :
-      mobileSort === 'price-high' ? 'HIGH–LOW' : '';
-  }
-
-  const chipsNode = document.getElementById('activeFilterChips');
-  if (chipsNode) {
-    const chips = [];
-    if (activeFilter !== 'all') chips.push(`<button type="button" data-remove-mobile-filter="category">${getMobileCategoryLabel(activeFilter)} ×</button>`);
-    if (mobilePriceFilter !== 'all') {
-      const priceLabel =
-        mobilePriceFilter === 'under1000' ? 'Under Rs. 1,000' :
-        mobilePriceFilter === '1000-1999' ? 'Rs. 1,000 - 1,999' :
-        'Rs. 2,000+';
-      chips.push(`<button type="button" data-remove-mobile-filter="price">${priceLabel} ×</button>`);
-    }
-    if (mobileInStockOnly) chips.push('<button type="button" data-remove-mobile-filter="stock">In stock ×</button>');
-    chipsNode.innerHTML = chips.join('');
-  }
-}
-
-function openCatalogSheet(id) {
-  const sheet = document.getElementById(id);
-  const overlay = document.getElementById('catalogSheetOverlay');
-  if (!sheet || !overlay) return;
-  renderMobileFilterUI();
-  overlay.hidden = false;
-  sheet.hidden = false;
-  requestAnimationFrame(() => {
-    overlay.classList.add('open');
-    sheet.classList.add('open');
-    sheet.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('catalog-sheet-open');
-  });
-}
-
-function closeCatalogSheets() {
-  const overlay = document.getElementById('catalogSheetOverlay');
-  const sheets = document.querySelectorAll('.catalog-sheet');
-  overlay?.classList.remove('open');
-  sheets.forEach(sheet => {
-    sheet.classList.remove('open');
-    sheet.setAttribute('aria-hidden', 'true');
-  });
-  document.body.classList.remove('catalog-sheet-open');
-  window.setTimeout(() => {
-    if (overlay) overlay.hidden = true;
-    sheets.forEach(sheet => { sheet.hidden = true; });
-  }, 180);
-}
-
-function applyMobileFilters() {
-  const category = document.querySelector('input[name="mobileCategory"]:checked');
-  const price = document.querySelector('input[name="mobilePrice"]:checked');
-  const stock = document.getElementById('mobileInStock');
-
-  activeFilter = category?.value || 'all';
-  mobilePriceFilter = price?.value || 'all';
-  mobileInStockOnly = Boolean(stock?.checked);
-  productPage = 1;
-
-  document.querySelectorAll('.filter').forEach(button => {
-    button.classList.toggle('active', button.dataset.filter === activeFilter);
-  });
-
-  renderProducts();
-  renderMobileFilterUI();
-  closeCatalogSheets();
-}
-
-function clearMobileFilters() {
-  activeFilter = 'all';
-  mobilePriceFilter = 'all';
-  mobileInStockOnly = false;
-  productPage = 1;
-
-  document.querySelectorAll('.filter').forEach(button => {
-    button.classList.toggle('active', button.dataset.filter === 'all');
-  });
-
-  renderProducts();
-  renderMobileFilterUI();
-}
-
 function renderFilters() {
   const filtersNode = document.querySelector('.filters');
   if (!filtersNode) return;
@@ -541,7 +394,6 @@ function renderFilters() {
   ].join('');
   filtersNode.scrollLeft = 0;
   requestAnimationFrame(updateFilterScrollButtons);
-  renderMobileFilterUI();
 }
 
 function updateCollectionScrollButtons() {
@@ -581,105 +433,8 @@ function getStockLabel(product) {
   return 'In stock';
 }
 
-
-function normalizeCatalogSearch(value) {
-  return String(value || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
-}
-
-function productMatchesCatalogSearch(product, query) {
-  const normalizedQuery = normalizeCatalogSearch(query);
-  if (!normalizedQuery) return true;
-
-  const searchable = normalizeCatalogSearch([
-    product.name,
-    product.type,
-    product.category,
-    product.collection_name,
-    product.collection_slug,
-    product.code,
-    product.description
-  ].filter(Boolean).join(' '));
-
-  const terms = normalizedQuery.split(/\s+/).filter(Boolean);
-
-  return terms.every(term => {
-    if (searchable.includes(term)) return true;
-
-    // Friendly plural/singular matching: "bangle" <-> "bangles", etc.
-    const singular = term.endsWith('s') && term.length > 3 ? term.slice(0, -1) : term;
-    const plural = term.endsWith('s') ? term : `${term}s`;
-    return searchable.includes(singular) || searchable.includes(plural);
-  });
-}
-
-function renderCatalogSearchUI(resultCount = null) {
-  const input = document.getElementById('catalogSearchInput');
-  const clear = document.getElementById('catalogSearchClear');
-  const status = document.getElementById('catalogSearchStatus');
-
-  if (input && document.activeElement !== input && input.value !== catalogSearchQuery) {
-    input.value = catalogSearchQuery;
-  }
-
-  if (clear) clear.hidden = !normalizeCatalogSearch(catalogSearchQuery);
-
-  if (status) {
-    const displayQuery = catalogSearchQuery.trim();
-    if (!displayQuery) {
-      status.textContent = '';
-    } else {
-      const count = resultCount == null ? getVisibleProducts().length : resultCount;
-      status.textContent = `${count} product${count === 1 ? '' : 's'} found for "${displayQuery}"`;
-    }
-  }
-}
-
-function setCatalogSearch(value) {
-  // Preserve exactly what the user typed, including spaces.
-  // Search normalization happens separately inside productMatchesCatalogSearch().
-  catalogSearchQuery = String(value || '');
-  productPage = 1;
-  renderProducts();
-}
-
 function getVisibleProducts() {
-  let visible = activeFilter === 'all'
-    ? [...products]
-    : products.filter(product => product.type === activeFilter || product.collection_slug === activeFilter);
-
-  if (catalogSearchQuery) {
-    visible = visible.filter(product => productMatchesCatalogSearch(product, catalogSearchQuery));
-  }
-
-  if (mobilePriceFilter === 'under1000') {
-    visible = visible.filter(product => Number(product.price || 0) < 1000);
-  } else if (mobilePriceFilter === '1000-1999') {
-    visible = visible.filter(product => Number(product.price || 0) >= 1000 && Number(product.price || 0) < 2000);
-  } else if (mobilePriceFilter === '2000plus') {
-    visible = visible.filter(product => Number(product.price || 0) >= 2000);
-  }
-
-  if (mobileInStockOnly) {
-    visible = visible.filter(product => {
-      const variants = Array.isArray(product.variants) ? product.variants : [];
-      return variants.length
-        ? variants.some(variant => Number(variant.stock || 0) > 0)
-        : Number(product.stock || 0) > 0;
-    });
-  }
-
-  if (mobileSort === 'price-low') {
-    visible.sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
-  } else if (mobileSort === 'price-high') {
-    visible.sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
-  }
-
-  return visible;
+  return activeFilter === 'all' ? products : products.filter(product => product.type === activeFilter || product.collection_slug === activeFilter);
 }
 
 function renderProductPagination(totalProducts) {
@@ -694,26 +449,10 @@ function renderProductPagination(totalProducts) {
 }
 
 function renderProducts() {
-  if (!productsNode) {
-    console.error('Nivara storefront: #products container is missing from index.html');
-    return;
-  }
-
   const visible = getVisibleProducts();
   const totalPages = Math.max(1, Math.ceil(visible.length / PRODUCTS_PER_PAGE));
   productPage = Math.min(productPage, totalPages);
   const pageProducts = visible.slice((productPage - 1) * PRODUCTS_PER_PAGE, productPage * PRODUCTS_PER_PAGE);
-
-  if (!pageProducts.length) {
-    const message = catalogSearchQuery
-      ? `No products found for "${catalogSearchQuery}". Try another keyword or clear the search.`
-      : 'Try changing or clearing your filters.';
-    productsNode.innerHTML = `<div class="no-products-found"><h3>No products found</h3><p>${message}</p></div>`;
-    renderProductPagination(visible.length);
-    renderMobileFilterUI();
-    renderCatalogSearchUI(visible.length);
-    return;
-  }
 
   productsNode.innerHTML = pageProducts.map(product => {
     const variants = Array.isArray(product.variants) ? product.variants : [];
@@ -750,8 +489,6 @@ function renderProducts() {
     `;
   }).join('');
   renderProductPagination(visible.length);
-  renderMobileFilterUI();
-  renderCatalogSearchUI(visible.length);
 }
 
 function renderCart() {
@@ -998,14 +735,20 @@ async function changeQuantity(id, delta, variantId = null) {
 
 function showToast(message, type = '', duration = 2600) {
   const toast = document.getElementById('toast');
+  if (!toast) return;
   window.clearTimeout(toast.hideTimer);
   toast.classList.remove('toast-availability-warning');
   toast.textContent = message;
   toast.classList.toggle('toast-success', type === 'success');
   toast.classList.add('show');
+  // Checkout modal must never obscure important errors.
+  const checkoutModal = document.getElementById('checkoutReviewModal');
+  const checkoutOpen = checkoutModal && !checkoutModal.hidden && checkoutModal.classList.contains('open');
+  toast.style.zIndex = checkoutOpen ? '2147483647' : '';
   toast.hideTimer = setTimeout(() => {
     toast.classList.remove('show');
     toast.textContent = '';
+    toast.style.zIndex = '';
   }, duration);
 }
 
@@ -1045,12 +788,15 @@ function showUnavailableCheckoutWarning(productNames = []) {
   content.append(title, message);
   toast.append(content, close);
   toast.classList.add('show');
+  const checkoutModal = document.getElementById('checkoutReviewModal');
+  toast.style.zIndex = checkoutModal && !checkoutModal.hidden && checkoutModal.classList.contains('open') ? '2147483647' : '';
 
   // Keep availability warnings visible considerably longer than normal toasts,
   // while still allowing the customer to dismiss them immediately with ×.
   toast.hideTimer = setTimeout(() => {
     toast.classList.remove('show');
     toast.textContent = '';
+    toast.style.zIndex = '';
   }, 12000);
 }
 
@@ -1491,7 +1237,6 @@ document.addEventListener('keydown', event => {
   closeProfile();
   closeOrders();
   closeImageViewer();
-  closeCatalogSheets();
   document.getElementById('userDropdown').hidden = true;
 });
 
@@ -1506,88 +1251,6 @@ document.getElementById('collectionPrev')?.addEventListener('click', () => scrol
 document.getElementById('collectionNext')?.addEventListener('click', () => scrollCollections(1));
 collectionsNode?.addEventListener('scroll', updateCollectionScrollButtons, { passive: true });
 window.addEventListener('resize', updateCollectionScrollButtons);
-
-
-const catalogSearchInput = document.getElementById('catalogSearchInput');
-const catalogSearchClear = document.getElementById('catalogSearchClear');
-let catalogSearchTimer = null;
-
-catalogSearchInput?.addEventListener('input', event => {
-  const value = event.currentTarget.value;
-  if (catalogSearchClear) catalogSearchClear.hidden = !value.trim();
-
-  window.clearTimeout(catalogSearchTimer);
-  catalogSearchTimer = window.setTimeout(() => {
-    setCatalogSearch(value);
-  }, 180);
-});
-
-catalogSearchInput?.addEventListener('keydown', event => {
-  if (event.key === 'Enter') {
-    event.preventDefault();
-    window.clearTimeout(catalogSearchTimer);
-    setCatalogSearch(event.currentTarget.value);
-    document.getElementById('products')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  if (event.key === 'Escape' && event.currentTarget.value) {
-    event.currentTarget.value = '';
-    setCatalogSearch('');
-    event.currentTarget.blur();
-  }
-});
-
-catalogSearchClear?.addEventListener('click', () => {
-  if (catalogSearchInput) {
-    catalogSearchInput.value = '';
-    catalogSearchInput.focus();
-  }
-  setCatalogSearch('');
-});
-
-document.getElementById('mobileFilterButton')?.addEventListener('click', () => openCatalogSheet('filterSheet'));
-document.getElementById('mobileSortButton')?.addEventListener('click', () => openCatalogSheet('sortSheet'));
-document.getElementById('catalogSheetOverlay')?.addEventListener('click', closeCatalogSheets);
-document.querySelectorAll('[data-close-catalog-sheet]').forEach(button => button.addEventListener('click', closeCatalogSheets));
-document.getElementById('applyMobileFilters')?.addEventListener('click', applyMobileFilters);
-document.getElementById('clearMobileFilters')?.addEventListener('click', clearMobileFilters);
-
-document.querySelectorAll('input[name="mobileSort"]').forEach(input => {
-  input.addEventListener('change', () => {
-    mobileSort = input.value;
-    productPage = 1;
-    renderProducts();
-    renderMobileFilterUI();
-    closeCatalogSheets();
-  });
-});
-
-document.getElementById('activeFilterChips')?.addEventListener('click', event => {
-  const button = event.target.closest('[data-remove-mobile-filter]');
-  if (!button) return;
-
-  const filter = button.dataset.removeMobileFilter;
-  if (filter === 'category') activeFilter = 'all';
-  if (filter === 'price') mobilePriceFilter = 'all';
-  if (filter === 'stock') mobileInStockOnly = false;
-
-  productPage = 1;
-  document.querySelectorAll('.filter').forEach(item => {
-    item.classList.toggle('active', item.dataset.filter === activeFilter);
-  });
-  renderProducts();
-  renderMobileFilterUI();
-});
-
-document.querySelectorAll('[data-filter-tab]').forEach(button => {
-  button.addEventListener('click', () => {
-    document.querySelectorAll('[data-filter-tab]').forEach(item => item.classList.toggle('active', item === button));
-    document.querySelectorAll('[data-filter-panel]').forEach(panel => {
-      panel.classList.toggle('active', panel.dataset.filterPanel === button.dataset.filterTab);
-    });
-  });
-});
-
 document.getElementById('filterPrev')?.addEventListener('click', () => scrollProductFilters(-1));
 document.getElementById('filterNext')?.addEventListener('click', () => scrollProductFilters(1));
 document.getElementById('productFilters')?.addEventListener('scroll', updateFilterScrollButtons, { passive: true });
@@ -1658,7 +1321,13 @@ async function proceedToPayment() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        items: cart,
+        items: cart.map(item => ({
+          id: item.id,
+          quantity: item.quantity,
+          variantId: item.variantId || null,
+          size: item.size || '',
+          uom: item.uom || ''
+        })),
         customer,
         promoCode: appliedPromo?.code || '',
         selectedAddressId
@@ -1706,6 +1375,7 @@ async function proceedToPayment() {
       },
       modal: {
         async ondismiss() {
+          let promoReleaseConfirmed = !appliedPromo;
           if (orderData.orderId) {
             try {
               const cancelResponse = await fetch('/api/cancel-order', {
@@ -1715,24 +1385,28 @@ async function proceedToPayment() {
                 keepalive: true
               });
 
+              if (cancelResponse.ok) promoReleaseConfirmed = true;
+
               // If order cancellation itself cannot update the pending order for any
               // reason, still release the promo reservation explicitly.
               if (!cancelResponse.ok) {
-                await fetch('/api/promo-release', {
+                const releaseResponse = await fetch('/api/promo-release', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ orderId: orderData.orderId }),
                   keepalive: true
                 });
+                if (releaseResponse.ok) promoReleaseConfirmed = true;
               }
             } catch (_) {
               try {
-                await fetch('/api/promo-release', {
+                const releaseResponse = await fetch('/api/promo-release', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ orderId: orderData.orderId }),
                   keepalive: true
                 });
+                if (releaseResponse.ok) promoReleaseConfirmed = true;
               } catch (_) {}
             }
           }
@@ -1741,10 +1415,16 @@ async function proceedToPayment() {
           // in-memory promo state as well. Otherwise the next click on "Apply"
           // is interpreted as "Remove" by applyPromoCode() and no /api/promo
           // request is sent.
-          resetAppliedPromo('Payment cancelled. You can apply the promo again.');
-          renderCart();
+          // Cancellation must be confirmed by the backend before promising reuse.
+          // If a reservation is still held, preserve the promo and tell the customer.
+          if (promoReleaseConfirmed) {
+            resetAppliedPromo('Payment cancelled. You can apply the promo again.');
+            renderCart();
+            showToast('Payment cancelled. Your bag has been kept.');
+          } else {
+            showToast('Payment cancelled, but coupon release could not be confirmed. Please contact support before retrying.');
+          }
           if (customer) refreshCustomerSession();
-          showToast('Payment cancelled. Your bag has been kept.');
         }
       }
     });

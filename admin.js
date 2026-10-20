@@ -10,11 +10,6 @@ const collectionList = document.getElementById('collectionList');
 const adminSessionNote = document.getElementById('adminSessionNote');
 const bulkExcelUpload = document.getElementById('bulkExcelUpload');
 const downloadBulkTemplate = document.getElementById('downloadBulkTemplate');
-const productNameFilter = document.getElementById('productNameFilter');
-const productCodeFilter = document.getElementById('productCodeFilter');
-const productCategoryFilter = document.getElementById('productCategoryFilter');
-const clearProductFilters = document.getElementById('clearProductFilters');
-const productFilterCount = document.getElementById('productFilterCount');
 
 function slugify(value) {
   return String(value || '')
@@ -117,7 +112,6 @@ async function loadProducts() {
   collections = collectionData.collections;
   renderCollectionOptions();
   renderCollectionList();
-  renderProductCategoryFilter();
   renderStockList();
 }
 
@@ -182,41 +176,8 @@ function readVariantRows(container) {
 }
 function newVariantRowHtml(){ return `<div class="variant-row" data-variant-row><input data-variant-size placeholder="Size e.g. 2.4"/><select data-variant-uom><option>CM</option><option>Inch</option><option>MM</option></select><input data-variant-stock type="number" min="0" value="0" placeholder="Stock"/><button type="button" data-remove-variant-row>Remove</button></div>`; }
 
-function normalizeFilterValue(value) {
-  return String(value || '').trim().toLowerCase();
-}
-
-function renderProductCategoryFilter() {
-  if (!productCategoryFilter) return;
-  const selected = productCategoryFilter.value;
-  const categories = [...new Set(products.map(product => String(product.category || '').trim()).filter(Boolean))]
-    .sort((a, b) => a.localeCompare(b));
-  productCategoryFilter.innerHTML = '<option value="">All categories</option>' + categories
-    .map(category => `<option value="${category.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">${category}</option>`)
-    .join('');
-  if (categories.includes(selected)) productCategoryFilter.value = selected;
-}
-
-function filteredProducts() {
-  const nameQuery = normalizeFilterValue(productNameFilter?.value);
-  const codeQuery = normalizeFilterValue(productCodeFilter?.value);
-  const categoryQuery = normalizeFilterValue(productCategoryFilter?.value);
-  return products.filter(product => {
-    const nameMatches = !nameQuery || normalizeFilterValue(product.name).includes(nameQuery);
-    const codeMatches = !codeQuery || normalizeFilterValue(product.code).includes(codeQuery);
-    const categoryMatches = !categoryQuery || normalizeFilterValue(product.category) === categoryQuery;
-    return nameMatches && codeMatches && categoryMatches;
-  });
-}
-
 function renderStockList() {
-  const visibleProducts = filteredProducts();
-  if (productFilterCount) productFilterCount.textContent = `Showing ${visibleProducts.length} of ${products.length} products`;
-  if (!visibleProducts.length) {
-    stockList.innerHTML = '<section class="admin-note">No products match the selected filters.</section>';
-    return;
-  }
-  stockList.innerHTML = visibleProducts.map(product => `
+  stockList.innerHTML = products.map(product => `
     <article class="stock-card ${product.active ? '' : 'stock-card-hidden'}">
       <img src="${product.image}" alt="${product.name}" />
       <div>
@@ -308,6 +269,7 @@ document.getElementById('loginForm').addEventListener('submit', async event => {
     document.getElementById('adminPassword').value = '';
     await loadProducts();
     showAdmin();
+    await loadTraffic();
     showToast('Logged in');
   } catch (error) {
     if (isMissingDatabaseTable(error)) {
@@ -464,17 +426,6 @@ document.getElementById('bulkUpdateForm').addEventListener('submit', async event
 document.getElementById('addNewVariant')?.addEventListener('click', () => document.getElementById('newProductVariants').insertAdjacentHTML('beforeend', newVariantRowHtml()));
 document.getElementById('newProductVariants')?.addEventListener('click', e => { const b=e.target.closest('[data-remove-variant-row]'); if(b) b.closest('[data-variant-row]').remove(); });
 
-productNameFilter?.addEventListener('input', renderStockList);
-productCodeFilter?.addEventListener('input', renderStockList);
-productCategoryFilter?.addEventListener('change', renderStockList);
-clearProductFilters?.addEventListener('click', () => {
-  if (productNameFilter) productNameFilter.value = '';
-  if (productCodeFilter) productCodeFilter.value = '';
-  if (productCategoryFilter) productCategoryFilter.value = '';
-  renderStockList();
-  productNameFilter?.focus();
-});
-
 document.addEventListener('click', async event => {
   const saveButton = event.target.closest('[data-save-stock]');
   const saveDetailsButton = event.target.closest('[data-save-details]');
@@ -611,7 +562,7 @@ document.addEventListener('keydown', refreshAdminSession);
 
 if (!isAdminSessionExpired()) {
   loadProducts()
-    .then(showAdmin)
+    .then(() => { showAdmin(); return loadTraffic(); })
     .catch(error => {
       if (isMissingDatabaseTable(error)) {
         showAdmin();
@@ -626,3 +577,28 @@ if (!isAdminSessionExpired()) {
 
 
 
+
+// Build 31 - Website traffic dashboard
+function trafficEscape(value) { return String(value ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c])); }
+function trafficRows(items, labelKey) {
+  if (!items || !items.length) return '<p class="traffic-empty">No traffic recorded yet.</p>';
+  return items.map(item => `<div class="traffic-list-row"><span>${trafficEscape(item[labelKey] || '-')}</span><strong>${Number(item.views || 0).toLocaleString('en-IN')}</strong></div>`).join('');
+}
+async function loadTraffic() {
+  const dashboard = document.getElementById('trafficDashboard');
+  if (!dashboard || isAdminSessionExpired()) return;
+  const days = document.getElementById('trafficDays')?.value || '30';
+  try {
+    const data = await apiRequest(`/api/traffic?days=${encodeURIComponent(days)}`);
+    document.getElementById('trafficVisitors').textContent = Number(data.today?.visitors || 0).toLocaleString('en-IN');
+    document.getElementById('trafficViews').textContent = Number(data.today?.page_views || 0).toLocaleString('en-IN');
+    const daily = document.getElementById('trafficDaily');
+    daily.innerHTML = data.daily?.length ? data.daily.map(row => `<tr><td>${row.date}</td><td>${Number(row.visitors||0).toLocaleString('en-IN')}</td><td>${Number(row.page_views||0).toLocaleString('en-IN')}</td></tr>`).join('') : '<tr><td colspan="3">No traffic recorded yet.</td></tr>';
+    document.getElementById('trafficPages').innerHTML = trafficRows(data.pages, 'path');
+    document.getElementById('trafficSources').innerHTML = trafficRows(data.referrers, 'source');
+    document.getElementById('trafficDevices').innerHTML = trafficRows(data.devices, 'device');
+  } catch (error) {
+    dashboard.insertAdjacentHTML('beforeend', `<p class="traffic-error">${error.message}</p>`);
+  }
+}
+document.getElementById('trafficDays')?.addEventListener('change', loadTraffic);

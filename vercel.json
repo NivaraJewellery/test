@@ -3,6 +3,10 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/api/traffic",
+      "destination": "/api?route=traffic"
+    },
+    {
       "source": "/api/account",
       "destination": "/api?route=account"
     },

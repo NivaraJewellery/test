@@ -41,6 +41,12 @@
       </section>
       <p class="session-note" id="adminSessionNote"></p>
 
+      <section class="product-form-wrap traffic-dashboard" id="trafficDashboard">
+        <div class="traffic-heading"><div><h2>Website Traffic</h2><p class="muted-text">Daily traffic for nivarajewellery.com · India time (IST)</p></div><select id="trafficDays"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option></select></div>
+        <div class="traffic-summary"><div><span>Today's visitors</span><strong id="trafficVisitors">—</strong></div><div><span>Today's page views</span><strong id="trafficViews">—</strong></div></div>
+        <div class="traffic-grid"><div><h3>Daily traffic</h3><div class="traffic-table-wrap"><table class="traffic-table"><thead><tr><th>Date</th><th>Visitors</th><th>Views</th></tr></thead><tbody id="trafficDaily"></tbody></table></div></div><div><h3>Top pages</h3><div id="trafficPages" class="traffic-list"></div><h3>Traffic sources</h3><div id="trafficSources" class="traffic-list"></div><h3>Devices</h3><div id="trafficDevices" class="traffic-list"></div></div></div>
+      </section>
+
       <section class="product-form-wrap">
         <h2>Add collection</h2>
         <form id="collectionForm" class="product-form compact-form">
@@ -87,30 +93,6 @@
 030, 2, 500, Forehead Ornament, assets/products/030-main.jpg, assets/products/030-hover.jpg, assets/products/030-extra.jpg" required></textarea>
           <button type="submit">Update products in bulk</button>
         </form>
-      </section>
-
-      <section class="product-filter-panel" aria-labelledby="productFilterTitle">
-        <div class="product-filter-heading">
-          <div>
-            <h2 id="productFilterTitle">Filter products</h2>
-            <p class="muted-text">Find products quickly by name, code or category.</p>
-          </div>
-          <p class="product-filter-count" id="productFilterCount" aria-live="polite"></p>
-        </div>
-        <div class="product-filter-controls">
-          <label>Product name
-            <input id="productNameFilter" type="search" placeholder="Search product name" autocomplete="off" />
-          </label>
-          <label>Product code
-            <input id="productCodeFilter" type="search" placeholder="Search product code" autocomplete="off" />
-          </label>
-          <label>Category
-            <select id="productCategoryFilter">
-              <option value="">All categories</option>
-            </select>
-          </label>
-          <button type="button" id="clearProductFilters">Clear filters</button>
-        </div>
       </section>
 
       <section class="stock-list" id="stockList"></section>

@@ -54,7 +54,6 @@
   <link rel="stylesheet" href="checkout-transition.css" />
   <link rel="stylesheet" href="mobile-ui-fix-v20.css" />
   <link rel="stylesheet" href="feedback.css" />
-  <link rel="stylesheet" href="mobile-product-filter.css?v=1" />
 </head>
 <body>
   <div class="announcement" id="announcementBar">Complimentary shipping on orders above &#8377;1,999</div>
@@ -104,40 +103,11 @@
 
     <section class="section products-section" id="shop">
       <div class="section-heading"><div><p class="eyebrow">A little something special</p><h2>Most loved pieces</h2></div></div>
-
-      <div class="catalog-search" role="search">
-        <span class="catalog-search-icon" aria-hidden="true">⌕</span>
-        <input
-          id="catalogSearchInput"
-          type="search"
-          inputmode="search"
-          autocomplete="off"
-          placeholder="Search jewellery, e.g. Bangles, Necklace..."
-          aria-label="Search products"
-        />
-        <button id="catalogSearchClear" class="catalog-search-clear" type="button" aria-label="Clear search" hidden>&times;</button>
-      </div>
-      <p id="catalogSearchStatus" class="catalog-search-status" aria-live="polite"></p>
-
       <div class="product-filter-carousel" aria-label="Product categories">
         <button class="product-filter-scroll-button" id="filterPrev" type="button" aria-label="Scroll product categories left">&lt;</button>
         <div class="filters" id="productFilters" tabindex="0" aria-label="Scrollable product categories"><button class="filter active" data-filter="all">All</button></div>
         <button class="product-filter-scroll-button" id="filterNext" type="button" aria-label="Scroll product categories right">&gt;</button>
       </div>
-
-      <div class="mobile-discovery-bar" aria-label="Product discovery controls">
-        <button id="mobileSortButton" class="mobile-discovery-action" type="button">
-          <span aria-hidden="true">⇅</span>
-          <span>SORT</span>
-          <b id="sortActiveLabel"></b>
-        </button>
-        <button id="mobileFilterButton" class="mobile-discovery-action" type="button">
-          <span aria-hidden="true">☷</span>
-          <span id="mobileFilterLabel">FILTER</span>
-        </button>
-      </div>
-      <div id="activeFilterChips" class="active-filter-chips" aria-live="polite"></div>
-
       <div class="products" id="products"></div>
       <div class="product-pagination" id="productPagination"></div>
     </section>
@@ -175,65 +145,6 @@
   </main>
 
   <footer id="contact"><div class="footer-logo"><img src="assets/logo-wordmark.png" alt="Nivara Jewellery" /></div><p>Designed for the moments you&rsquo;ll remember.</p><div><a href="#shop">Shop</a><a href="#story">About</a><span class="contact-details">Contact: +91 78998 90736<br>Email: support@nivarajewellery.com</span><a class="instagram-link" href="https://www.instagram.com/the_nivara_jewellery?igsh=aWtvbTczMnhhcXJt&utm_source=qr" target="_blank" rel="noopener"><svg class="instagram-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17" cy="7" r="1"></circle></svg> Instagram</a></div><small>&copy; 2026 Nivara Jewellery. All rights reserved.</small></footer>
-
-
-  <div id="catalogSheetOverlay" class="catalog-sheet-overlay" hidden></div>
-
-  <section id="filterSheet" class="catalog-sheet filter-sheet" aria-hidden="true" hidden>
-    <div class="catalog-sheet-header">
-      <div>
-        <small>FILTERS</small>
-        <h2>Find your jewellery</h2>
-      </div>
-      <button type="button" class="catalog-sheet-close" data-close-catalog-sheet aria-label="Close filters">&times;</button>
-    </div>
-
-    <div class="filter-sheet-layout">
-      <nav class="filter-sheet-tabs" aria-label="Filter groups">
-        <button type="button" class="filter-tab active" data-filter-tab="category">Category</button>
-        <button type="button" class="filter-tab" data-filter-tab="price">Price</button>
-        <button type="button" class="filter-tab" data-filter-tab="availability">Availability</button>
-      </nav>
-
-      <div class="filter-sheet-options">
-        <div class="filter-option-panel active" data-filter-panel="category">
-          <div id="mobileCategoryOptions"></div>
-        </div>
-
-        <div class="filter-option-panel" data-filter-panel="price">
-          <label><input type="radio" name="mobilePrice" value="all" checked> All prices</label>
-          <label><input type="radio" name="mobilePrice" value="under1000"> Under Rs. 1,000</label>
-          <label><input type="radio" name="mobilePrice" value="1000-1999"> Rs. 1,000 - 1,999</label>
-          <label><input type="radio" name="mobilePrice" value="2000plus"> Rs. 2,000 &amp; above</label>
-        </div>
-
-        <div class="filter-option-panel" data-filter-panel="availability">
-          <label><input id="mobileInStock" type="checkbox"> In stock only</label>
-        </div>
-      </div>
-    </div>
-
-    <div class="catalog-sheet-footer">
-      <button id="clearMobileFilters" type="button" class="catalog-clear">CLEAR ALL</button>
-      <button id="applyMobileFilters" type="button" class="catalog-apply">SHOW PRODUCTS</button>
-    </div>
-  </section>
-
-  <section id="sortSheet" class="catalog-sheet sort-sheet" aria-hidden="true" hidden>
-    <div class="catalog-sheet-header">
-      <div>
-        <small>SORT BY</small>
-        <h2>Choose an order</h2>
-      </div>
-      <button type="button" class="catalog-sheet-close" data-close-catalog-sheet aria-label="Close sort">&times;</button>
-    </div>
-
-    <div class="sort-options">
-      <label><input type="radio" name="mobileSort" value="recommended" checked> Recommended</label>
-      <label><input type="radio" name="mobileSort" value="price-low"> Price: Low to High</label>
-      <label><input type="radio" name="mobileSort" value="price-high"> Price: High to Low</label>
-    </div>
-  </section>
 
 <aside class="cart-panel" id="cartPanel" aria-label="Shopping bag" aria-hidden="true"><div class="cart-header"><h2>Your bag <span id="cartTitleCount">0</span></h2><button id="cartClose" aria-label="Close shopping bag">&times;</button></div><div id="cartItems" class="cart-items"></div><div class="cart-empty" id="cartEmpty">Your bag is waiting for its first sparkle.<br><button id="continueShopping">Continue shopping</button></div><div class="cart-footer"><div class="cart-total-row"><span>Subtotal</span><strong id="cartSubtotal">&#8377;0</strong></div><div class="cart-total-row promo-discount-row" id="promoDiscountRow" hidden><span id="promoDiscountLabel">Promo discount</span><strong id="promoDiscount">- &#8377;0</strong></div><div class="cart-total-row" id="cartShippingRow" hidden><span>Shipping</span><strong id="cartShipping">&#8377;0</strong></div><div class="cart-total-row cart-grand-total" id="cartGrandTotalRow" hidden><span>Total</span><strong id="cartGrandTotal">&#8377;0</strong></div><small>Shipping: ₹99 below ₹1,999. Free shipping from ₹1,999. Promo applies to product subtotal only.</small><button class="button button-dark" id="checkoutButton" type="button">Secure checkout</button><button class="button whatsapp-checkout-button" id="whatsappCheckoutButton" type="button">Continue on WhatsApp</button></div></aside><div class="overlay" id="overlay"></div>
   <section class="checkout-review-modal" id="checkoutReviewModal" aria-hidden="true" hidden>
@@ -302,6 +213,7 @@
   </div>
   <script src="app.js"></script>
   <script src="hero-image.js"></script>
+  <script src="traffic.js?v=31"></script>
 </body>
 </html>
 
