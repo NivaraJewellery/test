@@ -26,10 +26,10 @@ function setCheckoutTransitionLoading(isLoading, message = 'Loading your saved d
   overlay.classList.toggle('open', Boolean(isLoading));
   overlay.setAttribute('aria-hidden', isLoading ? 'false' : 'true');
 }
-const LAUNCH_PROMO_CODE = 'GANESHA5';
-const LAUNCH_PROMO_PERCENT = 5;
-const LAUNCH_PROMO_START = Date.parse('2026-09-12T00:00:00.000Z'); // active now
-const LAUNCH_PROMO_END = Date.parse('2026-09-14T18:30:00.000Z'); // 15 Sep 2026, 12:00 AM IST (exclusive)
+const LAUNCH_PROMO_CODE = 'DIWALI10';
+const LAUNCH_PROMO_PERCENT = 10;
+const LAUNCH_PROMO_START = Date.parse('2026-10-13T14:30:00.000Z'); // 13 Oct 2026, 8:00 PM IST
+const LAUNCH_PROMO_END = Date.parse('2026-11-09T18:30:00.000Z'); // 10 Nov 2026, 12:00 AM IST (exclusive)
 let appliedPromo = null;
 
 const formatPrice = value => `Rs. ${Number(value).toLocaleString('en-IN')}`;
@@ -251,8 +251,8 @@ function updateAnnouncementBar() {
   if (!bar) return;
   const state = getLaunchPromoState();
   bar.textContent = state === 'active'
-    ? `Ganesh Chaturthi offer: ${LAUNCH_PROMO_PERCENT}% OFF • Use code ${LAUNCH_PROMO_CODE} • Ends Monday, 14 Sep, 11:59 PM IST`
-    : state === 'upcoming' ? `Ganesh Chaturthi offer: ${LAUNCH_PROMO_PERCENT}% OFF • Use code ${LAUNCH_PROMO_CODE} • Starts soon • Ends Monday, 14 Sep, 11:59 PM IST`
+    ? `Diwali offer: ${LAUNCH_PROMO_PERCENT}% OFF • Use code ${LAUNCH_PROMO_CODE} • Ends 9 Nov, 11:59 PM IST`
+    : state === 'upcoming' ? `Diwali offer: ${LAUNCH_PROMO_PERCENT}% OFF • Use code ${LAUNCH_PROMO_CODE} • Starts soon • Ends 9 Nov, 11:59 PM IST`
       : 'Complimentary shipping on orders above ₹1,999';
   requestAnimationFrame(syncAnnouncementOffset);
 }
